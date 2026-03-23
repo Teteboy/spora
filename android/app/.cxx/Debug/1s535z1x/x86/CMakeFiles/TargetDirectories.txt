@@ -1,0 +1,2 @@
+C:/Users/admin/Downloads/Spora/spora_app/android/app/.cxx/Debug/1s535z1x/x86/CMakeFiles/edit_cache.dir
+C:/Users/admin/Downloads/Spora/spora_app/android/app/.cxx/Debug/1s535z1x/x86/CMakeFiles/rebuild_cache.dir
