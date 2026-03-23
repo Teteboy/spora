@@ -1,4 +1,4 @@
-# spora_app
+# spora
 
 A new Flutter project.
 
