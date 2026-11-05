@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:go_router/go_router.dart';
 import '../../core/theme/app_colors.dart';
-import '../../core/constants/app_constants.dart';
-import '../../widgets/spora_logo.dart';
+import '../../core/theme/app_text_styles.dart';
+import 'premium_widgets.dart';
+import 'payment_method_screen.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
+/// Frame "15 · Compte — SPORA Premium" — dark navy paywall.
 class PremiumScreen extends StatefulWidget {
   const PremiumScreen({super.key});
 
@@ -13,198 +15,254 @@ class PremiumScreen extends StatefulWidget {
 }
 
 class _PremiumScreenState extends State<PremiumScreen> {
-  bool _isYearly = false;
+  bool _isYearly = true;
+
+  static const _features = [
+    (LucideIcons.video, 'Highlights illimités'),
+    (LucideIcons.crown, 'Badge Premium'),
+    (LucideIcons.trendingUp, 'Profil prioritaire'),
+    (LucideIcons.barChart3, 'Statistiques détaillées'),
+    (LucideIcons.headphones, 'Assistance prioritaire'),
+  ];
+
+  static const _comparison = [
+    ('Visibilité', 'Standard', 'Prioritaire'),
+    ('Highlights', '1', 'Illimités'),
+    ('Badge', '—', 'Premium'),
+    ('Statistiques', 'Essentielles', 'Détaillées'),
+    ('Messages', 'Standard', 'Prioritaires'),
+    ('Candidatures', '3 / mois', 'Illimitées'),
+    ('Support', 'Standard', 'Prioritaire'),
+  ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [AppColors.primaryDark, AppColors.primary, Color(0xFF1D4ED8)],
-          ),
-        ),
-        child: SafeArea(
-          child: Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: AppConstants.spacingMD, vertical: 8),
-                child: Row(
+      backgroundColor: AppColors.navy900,
+      body: SafeArea(
+        child: Column(
+          children: [
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: AppDimens.screenMargin),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    IconButton(
-                      icon: const Icon(Icons.close, color: Colors.white),
-                      onPressed: () => context.pop(),
+                    const SizedBox(height: AppDimens.lg),
+                    // Logo + wordmark
+                    Row(
+                      children: [
+                        Container(
+                          width: 56,
+                          height: 56,
+                          decoration: BoxDecoration(
+                            color: AppColors.surface,
+                            borderRadius:
+                                BorderRadius.circular(AppDimens.radiusCard),
+                          ),
+                          child: const Center(
+                            child: Icon(LucideIcons.crown,
+                                color: AppColors.goldDark, size: 30),
+                          ),
+                        ),
+                        const SizedBox(width: AppDimens.md),
+                        Text('SPORA PREMIUM',
+                            style: AppTextStyles.h1(
+                                color: AppColors.textLight)),
+                      ],
                     ),
-                    const Spacer(),
-                    const SporaLogo(height: 32),
-                    const Spacer(),
-                    const SizedBox(width: 44),
+                    const SizedBox(height: AppDimens.xl),
+                    Text('Faites-vous repérer plus vite.',
+                        style: AppTextStyles.display(
+                            color: AppColors.textLight)),
+                    const SizedBox(height: AppDimens.md),
+                    Text('Plus de visibilité. Plus de possibilités.',
+                        style:
+                            AppTextStyles.bodyLarge(color: AppColors.darkTextSecondary)),
+                    const SizedBox(height: AppDimens.section),
+                    // Feature list
+                    ..._features.map((f) => Padding(
+                          padding:
+                              const EdgeInsets.only(bottom: AppDimens.md),
+                          child: Row(
+                            children: [
+                              Icon(f.$1, color: AppColors.gold, size: 24),
+                              const SizedBox(width: AppDimens.md),
+                              Text(f.$2,
+                                  style: AppTextStyles.h3(
+                                      color: AppColors.textLight)),
+                            ],
+                          ),
+                        )),
+                    const SizedBox(height: AppDimens.sm),
+                    // Free vs Premium comparison
+                    Container(
+                      padding: const EdgeInsets.all(AppDimens.lg),
+                      decoration: BoxDecoration(
+                        color: AppColors.navy800,
+                        borderRadius:
+                            BorderRadius.circular(AppDimens.radiusCard),
+                      ),
+                      child: Table(
+                        children: [
+                          TableRow(children: [
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: Text('Votre profil',
+                                  style: AppTextStyles.bodyStrong(
+                                      color: AppColors.darkTextSecondary)),
+                            ),
+                            Center(
+                              child: Padding(
+                                padding:
+                                    const EdgeInsets.only(bottom: 12),
+                                child: Text('Gratuit',
+                                    style: AppTextStyles.body(
+                                        color:
+                                            AppColors.darkTextSecondary)),
+                              ),
+                            ),
+                            Center(
+                              child: Padding(
+                                padding:
+                                    const EdgeInsets.only(bottom: 12),
+                                child: Text('Premium',
+                                    style: AppTextStyles.bodyStrong(
+                                        color: AppColors.gold)),
+                              ),
+                            ),
+                          ]),
+                          ..._comparison.map((r) => TableRow(children: [
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      vertical: 6),
+                                  child: Text(r.$1,
+                                      style: AppTextStyles.body(
+                                          color: AppColors
+                                              .darkTextSecondary)),
+                                ),
+                                Center(
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 6),
+                                    child: Text(r.$2,
+                                        style: AppTextStyles.body(
+                                            color: AppColors
+                                                .darkTextSecondary)),
+                                  ),
+                                ),
+                                Center(
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 6),
+                                    child: Text(r.$3,
+                                        style: AppTextStyles.bodyStrong(
+                                            color: AppColors.gold)),
+                                  ),
+                                ),
+                              ])),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: AppDimens.section),
+                    // Plan selector
+                    _PlanTile(
+                      title: 'Mensuel',
+                      price: '4 900 FCFA',
+                      period: '/ mois',
+                      selected: !_isYearly,
+                      onTap: () => setState(() => _isYearly = false),
+                    ),
+                    const SizedBox(height: AppDimens.md),
+                    _PlanTile(
+                      title: 'Annuel',
+                      price: '49 000 FCFA',
+                      period: '/ an',
+                      badge: 'Économisez 2 mois',
+                      selected: _isYearly,
+                      onTap: () => setState(() => _isYearly = true),
+                    ),
+                    const SizedBox(height: AppDimens.section),
+                    Text(
+                      'Le badge Premium indique l’abonnement. La vérification d’identité est accordée séparément par SPORA.',
+                      style: AppTextStyles.caption(
+                          color: AppColors.darkTextSecondary),
+                    ),
+                    const SizedBox(height: AppDimens.lg),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text('Restaurer les achats',
+                            style: AppTextStyles.body(
+                                color: AppColors.darkTextSecondary)),
+                        const SizedBox(width: AppDimens.xl),
+                        Text('Conditions',
+                            style: AppTextStyles.body(
+                                color: AppColors.darkTextSecondary)),
+                      ],
+                    ),
+                    const SizedBox(height: AppDimens.section),
                   ],
                 ),
               ),
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(horizontal: AppConstants.spacingMD),
-                  child: Column(
-                    children: [
-                      // Crown icon
-                      Container(
-                        width: 80,
-                        height: 80,
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(colors: AppColors.goldGradient),
-                          shape: BoxShape.circle,
-                          boxShadow: [BoxShadow(color: AppColors.gold.withValues(alpha: 0.4), blurRadius: 20)],
-                        ),
-                        child: const Icon(Icons.workspace_premium, color: Colors.white, size: 44),
-                      ).animate().scale(duration: 600.ms, curve: Curves.elasticOut),
-                      const SizedBox(height: 16),
-                      const Text(
-                        'SPORA Premium',
-                        style: TextStyle(fontFamily: 'Poppins', fontSize: 28, fontWeight: FontWeight.w800, color: Colors.white),
-                      ).animate().fadeIn(duration: 400.ms, delay: 200.ms),
-                      const SizedBox(height: 8),
-                      const Text(
-                        'Débloquez tout votre potentiel',
-                        style: TextStyle(fontFamily: 'Poppins', fontSize: 14, color: Colors.white70),
-                      ).animate().fadeIn(duration: 400.ms, delay: 300.ms),
-                      const SizedBox(height: 24),
-                      // Features
-                      _FeaturesList().animate().fadeIn(duration: 400.ms, delay: 400.ms),
-                      const SizedBox(height: 24),
-                      // Billing toggle
-                      Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(100),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            _BillingTab(label: 'Mensuel', isActive: !_isYearly, onTap: () => setState(() => _isYearly = false)),
-                            _BillingTab(label: 'Annuel (-30%)', isActive: _isYearly, onTap: () => setState(() => _isYearly = true)),
-                          ],
-                        ),
-                      ).animate().fadeIn(duration: 400.ms, delay: 500.ms),
-                      const SizedBox(height: 24),
-                      // Price card
-                      Container(
-                        padding: const EdgeInsets.all(24),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(AppConstants.radiusXL),
-                          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 20)],
-                        ),
-                        child: Column(
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text('XOF ', style: TextStyle(fontFamily: 'Poppins', fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
-                                Text(
-                                  _isYearly ? '14,000' : '1,990',
-                                  style: const TextStyle(fontFamily: 'Poppins', fontSize: 48, fontWeight: FontWeight.w800, color: AppColors.primary),
-                                ),
-                              ],
-                            ),
-                            Text(
-                              _isYearly ? '/ an (soit 1,167 XOF/mois)' : '/ mois',
-                              style: const TextStyle(fontFamily: 'Poppins', fontSize: 13, color: AppColors.textSecondary),
-                            ),
-                            const SizedBox(height: 20),
-                            SizedBox(
-                              width: double.infinity,
-                              child: ElevatedButton(
-                                onPressed: () {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(content: Text('Redirection vers le paiement...')),
-                                  );
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: AppColors.gold,
-                                  padding: const EdgeInsets.symmetric(vertical: 16),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                ),
-                                child: const Text(
-                                  'Passer en Premium',
-                                  style: TextStyle(fontFamily: 'Poppins', fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            const Text(
-                              'Paiement sécurisé • Mobile Money • Carte bancaire',
-                              style: TextStyle(fontFamily: 'Poppins', fontSize: 11, color: AppColors.textSecondary),
-                              textAlign: TextAlign.center,
-                            ),
-                          ],
-                        ),
-                      ).animate().fadeIn(duration: 400.ms, delay: 600.ms).slideY(begin: 0.1, duration: 400.ms, delay: 600.ms),
-                      const SizedBox(height: 24),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _FeaturesList extends StatelessWidget {
-  final features = const [
-    (icon: Icons.videocam, title: 'Highlights illimités', subtitle: 'Uploadez autant de vidéos que vous voulez'),
-    (icon: Icons.trending_up, title: 'Mise en avant', subtitle: 'Apparaissez en tête des résultats de recherche'),
-    (icon: Icons.verified, title: 'Badge Premium', subtitle: 'Profil certifié visible par tous les agents'),
-    (icon: Icons.bar_chart, title: 'Analytiques avancées', subtitle: 'Suivez vos vues, likes et intérêt des agents'),
-    (icon: Icons.message, title: 'Messagerie prioritaire', subtitle: 'Répondez en premier aux recruteurs'),
-  ];
-
-  const _FeaturesList();
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: features.map((f) => Padding(
-        padding: const EdgeInsets.only(bottom: 12),
-        child: Row(
-          children: [
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.15), shape: BoxShape.circle),
-              child: Icon(f.icon, color: AppColors.gold, size: 20),
             ),
-            const SizedBox(width: 12),
-            Expanded(
+            // Bottom CTA
+            Container(
+              padding: const EdgeInsets.fromLTRB(
+                  AppDimens.screenMargin,
+                  AppDimens.md,
+                  AppDimens.screenMargin,
+                  AppDimens.md),
+              decoration: const BoxDecoration(
+                border: Border(
+                    top: BorderSide(color: AppColors.darkBorder)),
+              ),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(f.title, style: const TextStyle(fontFamily: 'Poppins', fontSize: 14, fontWeight: FontWeight.w700, color: Colors.white)),
-                  Text(f.subtitle, style: const TextStyle(fontFamily: 'Poppins', fontSize: 11, color: Colors.white60)),
+                  GoldButton(
+                    label: 'Devenir Premium',
+                    icon: LucideIcons.crown,
+                    onPressed: () => Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => PaymentMethodScreen(
+                          plan: PremiumPlan(yearly: _isYearly),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: AppDimens.md),
+                  Text(
+                    'Annulable à tout moment · Paiement sécurisé',
+                    style: AppTextStyles.caption(
+                        color: AppColors.darkTextSecondary),
+                  ),
                 ],
               ),
             ),
-            const Icon(Icons.check_circle, color: AppColors.gold, size: 20),
           ],
         ),
-      )).toList(),
-    );
+      ),
+    ).animate().fadeIn(duration: 200.ms);
   }
 }
 
-class _BillingTab extends StatelessWidget {
-  final String label;
-  final bool isActive;
+class _PlanTile extends StatelessWidget {
+  final String title;
+  final String price;
+  final String period;
+  final String? badge;
+  final bool selected;
   final VoidCallback onTap;
 
-  const _BillingTab({required this.label, required this.isActive, required this.onTap});
+  const _PlanTile({
+    required this.title,
+    required this.price,
+    required this.period,
+    required this.selected,
+    required this.onTap,
+    this.badge,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -212,22 +270,84 @@ class _BillingTab extends StatelessWidget {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+        padding: const EdgeInsets.all(AppDimens.lg),
         decoration: BoxDecoration(
-          color: isActive ? Colors.white : Colors.transparent,
-          borderRadius: BorderRadius.circular(100),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontFamily: 'Poppins',
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: isActive ? AppColors.primary : Colors.white70,
+          color: selected ? AppColors.darkMuted : AppColors.navy800,
+          borderRadius: BorderRadius.circular(AppDimens.radiusCard),
+          border: Border.all(
+            color: selected ? AppColors.gold : AppColors.darkBorder,
+            width: selected ? 2 : 1,
           ),
+        ),
+        child: Stack(
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 24,
+                  height: 24,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: selected ? AppColors.gold : Colors.transparent,
+                    border: Border.all(
+                      color:
+                          selected ? AppColors.gold : AppColors.darkTextMuted,
+                      width: 2,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: AppDimens.md),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(title,
+                          style:
+                              AppTextStyles.h3(color: AppColors.textLight)),
+                      const SizedBox(height: AppDimens.xs),
+                      RichText(
+                        text: TextSpan(children: [
+                          TextSpan(
+                            text: price,
+                            style: AppTextStyles.h2(
+                                color: selected
+                                    ? AppColors.gold
+                                    : AppColors.textLight),
+                          ),
+                          TextSpan(
+                            text: ' $period',
+                            style: AppTextStyles.h3(
+                                color: selected
+                                    ? AppColors.gold
+                                    : AppColors.darkTextSecondary),
+                          ),
+                        ]),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            if (badge != null)
+              Positioned(
+                top: 0,
+                right: 0,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: AppColors.gold.withValues(alpha: 0.14),
+                    borderRadius:
+                        BorderRadius.circular(AppDimens.radiusPill),
+                  ),
+                  child: Text(badge!,
+                      style: AppTextStyles.caption(color: AppColors.gold)
+                          .copyWith(fontWeight: FontWeight.w600)),
+                ),
+              ),
+          ],
         ),
       ),
     );
   }
 }
-

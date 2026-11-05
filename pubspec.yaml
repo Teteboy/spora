@@ -41,7 +41,7 @@ dependencies:
   flutter_svg: ^2.0.10+1
 
   cupertino_icons: ^1.0.8
-
+  lucide_icons_flutter: 3.1.25
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -54,6 +54,17 @@ flutter:
     - assets/images/
 
   fonts:
+    - family: TikTok Sans
+      fonts:
+        - asset: assets/fonts/TikTokSans-Regular.ttf
+        - asset: assets/fonts/TikTokSans-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/TikTokSans-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/TikTokSans-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/TikTokSans-ExtraBold.ttf
+          weight: 800
     - family: Poppins
       fonts:
         - asset: assets/fonts/Poppins-Regular.ttf

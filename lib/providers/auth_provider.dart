@@ -43,25 +43,35 @@ class AuthProvider extends ChangeNotifier {
 
     await Future.delayed(const Duration(seconds: 1));
 
-    // Check against demo credentials
-    final creds = demoCredentials[_selectedUserType.name];
-    if (creds != null && email == creds['email'] && password == creds['password']) {
-      _currentUser = UserModel(
-        id: '${_selectedUserType.name}_${DateTime.now().millisecondsSinceEpoch}',
-        name: creds['name']!,
-        email: email,
-        role: _getUserRole(),
-        avatarUrl: 'https://i.pravatar.cc/200?u=$email',
-        subscription: _selectedUserType == UserType.guest 
-            ? SubscriptionType.free 
-            : SubscriptionType.premium,
-        createdAt: DateTime(2024, 1, 15),
-      );
-      _status = AuthStatus.authenticated;
-    } else {
+    // No backend yet: any valid-looking credentials are accepted.
+    // The demo accounts above simply map to nicer display names/avatars.
+    if (password.length < 8 || !email.contains('@')) {
       _errorMessage = 'Email ou mot de passe invalide';
       _status = AuthStatus.error;
+      notifyListeners();
+      return;
     }
+
+    // Infer the role from a known demo e-mail, else keep the chosen type.
+    for (final entry in demoCredentials.entries) {
+      if (entry.value['email'] == email) {
+        _selectedUserType = UserType.values.byName(entry.key);
+      }
+    }
+    final creds = demoCredentials[_selectedUserType.name];
+    final isDemo = creds != null && email == creds['email'];
+    _currentUser = UserModel(
+      id: '${_selectedUserType.name}_${DateTime.now().millisecondsSinceEpoch}',
+      name: isDemo ? creds['name']! : email.split('@').first,
+      email: email,
+      role: _getUserRole(),
+      avatarUrl: 'https://i.pravatar.cc/200?u=$email',
+      subscription: _selectedUserType == UserType.guest
+          ? SubscriptionType.free
+          : SubscriptionType.premium,
+      createdAt: DateTime(2024, 1, 15),
+    );
+    _status = AuthStatus.authenticated;
     notifyListeners();
   }
 

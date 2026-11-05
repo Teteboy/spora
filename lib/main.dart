@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import 'core/theme/app_theme.dart';
@@ -20,8 +21,17 @@ void main() {
   runApp(const SporaApp());
 }
 
-class SporaApp extends StatelessWidget {
+class SporaApp extends StatefulWidget {
   const SporaApp({super.key});
+
+  @override
+  State<SporaApp> createState() => _SporaAppState();
+}
+
+class _SporaAppState extends State<SporaApp> {
+  // The router must be created once: recreating it on every provider
+  // notification resets navigation to the initial location.
+  GoRouter? _router;
 
   @override
   Widget build(BuildContext context) {
@@ -36,14 +46,14 @@ class SporaApp extends StatelessWidget {
         builder: (context) {
           final authProvider = context.watch<AuthProvider>();
           final themeProvider = context.watch<ThemeProvider>();
-          final router = createRouter(authProvider);
+          _router ??= createRouter(authProvider);
           return MaterialApp.router(
             title: 'SPORA',
             debugShowCheckedModeBanner: false,
             theme: AppTheme.lightTheme,
             darkTheme: AppTheme.darkTheme,
             themeMode: themeProvider.themeMode,
-            routerConfig: router,
+            routerConfig: _router,
           );
         },
       ),

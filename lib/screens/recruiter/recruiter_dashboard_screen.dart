@@ -3,12 +3,31 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_text_styles.dart';
 import '../../core/constants/app_constants.dart';
 import '../../providers/player_provider.dart';
 import '../../providers/messaging_provider.dart';
-import '../../widgets/player_card.dart';
 import '../../widgets/spora_logo.dart';
+import '../home/home_screen.dart' show PlayerListTile;
 import 'package:badges/badges.dart' as badges;
+import 'package:lucide_icons_flutter/lucide_icons.dart';
+
+/// Bordered icon tile used in the top bar (Figma header pattern, 44 px).
+Widget _headerTile(IconData icon, VoidCallback onTap) {
+  return GestureDetector(
+    onTap: onTap,
+    child: Container(
+      width: AppDimens.minTouch,
+      height: AppDimens.minTouch,
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppDimens.radiusInput),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Icon(icon, size: 26, color: AppColors.textPrimary),
+    ),
+  );
+}
 
 class RecruiterDashboardScreen extends StatefulWidget {
   const RecruiterDashboardScreen({super.key});
@@ -64,7 +83,7 @@ class _RecruiterDashboardScreenState extends State<RecruiterDashboardScreen> {
       elevation: 0,
       title: Row(
         children: [
-          const SporaLogo(height: 32),
+          const SporaLogo(height: 26, flat: true),
           const SizedBox(width: 8),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -75,7 +94,7 @@ class _RecruiterDashboardScreenState extends State<RecruiterDashboardScreen> {
             child: const Text(
               'CLUB',
               style: TextStyle(
-                fontFamily: 'Poppins',
+                fontFamily: 'TikTok Sans',
                 fontSize: 10,
                 fontWeight: FontWeight.w700,
                 color: AppColors.primary,
@@ -95,22 +114,18 @@ class _RecruiterDashboardScreenState extends State<RecruiterDashboardScreen> {
                   '${msg.unreadNotifications}',
                   style: const TextStyle(color: Colors.white, fontSize: 9),
                 ),
-                badgeStyle: const badges.BadgeStyle(badgeColor: AppColors.gold),
-                child: IconButton(
-                  icon: Icon(Icons.notifications_outlined,
-                      color: Theme.of(context).iconTheme.color),
-                  onPressed: () => context.push('/notifications'),
-                ),
+                badgeStyle: const badges.BadgeStyle(badgeColor: AppColors.danger),
+                child: _headerTile(
+                    LucideIcons.bell, () => context.push('/notifications')),
               ),
             );
           },
         ),
-        IconButton(
-          icon: Icon(Icons.add_circle_outline,
-              color: Theme.of(context).iconTheme.color),
-          onPressed: () => context.push('/recruiter/create-trial'),
+        Padding(
+          padding: const EdgeInsets.only(right: 8),
+          child: _headerTile(LucideIcons.plusCircle,
+              () => context.push('/opportunities/publish')),
         ),
-        const SizedBox(width: 8),
       ],
     );
   }
@@ -122,7 +137,7 @@ class _RecruiterDashboardScreenState extends State<RecruiterDashboardScreen> {
         Text(
           'Statistiques',
           style: TextStyle(
-            fontFamily: 'Poppins',
+            fontFamily: 'TikTok Sans',
             fontSize: 18,
             fontWeight: FontWeight.w600,
             color: Theme.of(context).textTheme.headlineSmall?.color,
@@ -134,7 +149,7 @@ class _RecruiterDashboardScreenState extends State<RecruiterDashboardScreen> {
             Expanded(
               child: _buildStatCard(
                 context,
-                icon: Icons.people_outline,
+                icon: LucideIcons.users,
                 label: 'Candidatures',
                 value: '156',
                 color: AppColors.primary,
@@ -144,7 +159,7 @@ class _RecruiterDashboardScreenState extends State<RecruiterDashboardScreen> {
             Expanded(
               child: _buildStatCard(
                 context,
-                icon: Icons.check_circle_outline,
+                icon: LucideIcons.checkCircle,
                 label: 'Acceptées',
                 value: '42',
                 color: AppColors.success,
@@ -158,7 +173,7 @@ class _RecruiterDashboardScreenState extends State<RecruiterDashboardScreen> {
             Expanded(
               child: _buildStatCard(
                 context,
-                icon: Icons.event,
+                icon: LucideIcons.calendar,
                 label: 'Trials actifs',
                 value: '3',
                 color: AppColors.gold,
@@ -168,7 +183,7 @@ class _RecruiterDashboardScreenState extends State<RecruiterDashboardScreen> {
             Expanded(
               child: _buildStatCard(
                 context,
-                icon: Icons.visibility,
+                icon: LucideIcons.eye,
                 label: 'Vues totales',
                 value: '8.5K',
                 color: AppColors.info,
@@ -215,7 +230,7 @@ class _RecruiterDashboardScreenState extends State<RecruiterDashboardScreen> {
           Text(
             value,
             style: TextStyle(
-              fontFamily: 'Poppins',
+              fontFamily: 'TikTok Sans',
               fontSize: 24,
               fontWeight: FontWeight.w700,
               color: Theme.of(context).textTheme.headlineMedium?.color,
@@ -225,7 +240,7 @@ class _RecruiterDashboardScreenState extends State<RecruiterDashboardScreen> {
           Text(
             label,
             style: TextStyle(
-              fontFamily: 'Poppins',
+              fontFamily: 'TikTok Sans',
               fontSize: 12,
               color: Theme.of(context).textTheme.bodySmall?.color,
             ),
@@ -245,7 +260,7 @@ class _RecruiterDashboardScreenState extends State<RecruiterDashboardScreen> {
             Text(
               'Joueurs Recommandés',
               style: TextStyle(
-                fontFamily: 'Poppins',
+                fontFamily: 'TikTok Sans',
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
                 color: Theme.of(context).textTheme.headlineSmall?.color,
@@ -266,13 +281,7 @@ class _RecruiterDashboardScreenState extends State<RecruiterDashboardScreen> {
             final players = provider.recommendedPlayers.take(3).toList();
             return Column(
               children: players
-                  .map((player) => Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: PlayerCard(
-                          player: player,
-                          onTap: () => context.push('/player/${player.id}'),
-                        ),
-                      ))
+                  .map((player) => PlayerListTile(player: player))
                   .toList(),
             );
           },
@@ -294,14 +303,14 @@ class _RecruiterDashboardScreenState extends State<RecruiterDashboardScreen> {
             Text(
               'Trials Ouverts',
               style: TextStyle(
-                fontFamily: 'Poppins',
+                fontFamily: 'TikTok Sans',
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
                 color: Theme.of(context).textTheme.headlineSmall?.color,
               ),
             ),
             TextButton(
-              onPressed: () => context.push('/recruiter/trials'),
+              onPressed: () => context.push('/opportunities/mine'),
               child: const Text('Voir tout'),
             ),
           ],
@@ -371,7 +380,7 @@ class _RecruiterDashboardScreenState extends State<RecruiterDashboardScreen> {
                 child: Text(
                   title,
                   style: TextStyle(
-                    fontFamily: 'Poppins',
+                    fontFamily: 'TikTok Sans',
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                     color: Theme.of(context).textTheme.bodyLarge?.color,
@@ -387,7 +396,7 @@ class _RecruiterDashboardScreenState extends State<RecruiterDashboardScreen> {
                 child: Text(
                   'Actif',
                   style: TextStyle(
-                    fontFamily: 'Poppins',
+                    fontFamily: 'TikTok Sans',
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
                     color: AppColors.success,
@@ -399,20 +408,20 @@ class _RecruiterDashboardScreenState extends State<RecruiterDashboardScreen> {
           const SizedBox(height: 12),
           Row(
             children: [
-              Icon(Icons.calendar_today,
+              Icon(LucideIcons.calendar,
                   size: 14,
                   color: Theme.of(context).textTheme.bodySmall?.color),
               const SizedBox(width: 6),
               Text(
                 date,
                 style: TextStyle(
-                  fontFamily: 'Poppins',
+                  fontFamily: 'TikTok Sans',
                   fontSize: 12,
                   color: Theme.of(context).textTheme.bodySmall?.color,
                 ),
               ),
               const SizedBox(width: 16),
-              Icon(Icons.location_on,
+              Icon(LucideIcons.mapPin,
                   size: 14,
                   color: Theme.of(context).textTheme.bodySmall?.color),
               const SizedBox(width: 6),
@@ -420,7 +429,7 @@ class _RecruiterDashboardScreenState extends State<RecruiterDashboardScreen> {
                 child: Text(
                   location,
                   style: TextStyle(
-                    fontFamily: 'Poppins',
+                    fontFamily: 'TikTok Sans',
                     fontSize: 12,
                     color: Theme.of(context).textTheme.bodySmall?.color,
                   ),
@@ -448,7 +457,7 @@ class _RecruiterDashboardScreenState extends State<RecruiterDashboardScreen> {
               Text(
                 '$applicants/$maxApplicants',
                 style: TextStyle(
-                  fontFamily: 'Poppins',
+                  fontFamily: 'TikTok Sans',
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
                   color: Theme.of(context).textTheme.bodySmall?.color,

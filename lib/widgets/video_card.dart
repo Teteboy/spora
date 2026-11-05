@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/player_model.dart';
 import '../core/theme/app_colors.dart';
 import '../core/constants/app_constants.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 class VideoCard extends StatelessWidget {
   final VideoModel video;
@@ -40,14 +41,14 @@ class VideoCard extends StatelessWidget {
                     top: Radius.circular(AppConstants.radiusLG),
                   ),
                   child: Image.network(
-                    video.thumbnailUrl ?? 'https://picsum.photos/400/225',
+                    video.thumbnailUrl ?? 'https://images.unsplash.com/photo-1522778119026-d647f0596c20?w=400&h=225&fit=crop&auto=format&q=80',
                     height: 130,
                     width: double.infinity,
                     fit: BoxFit.cover,
                     errorBuilder: (_, __, ___) => Container(
                       height: 130,
                       color: AppColors.primaryDark,
-                      child: const Icon(Icons.play_circle, size: 40, color: Colors.white54),
+                      child: const Icon(LucideIcons.playCircle, size: 40, color: Colors.white54),
                     ),
                   ),
                 ),
@@ -71,10 +72,10 @@ class VideoCard extends StatelessWidget {
                 const Positioned(
                   top: 8,
                   left: 8,
-                  child: Icon(Icons.videocam, color: Colors.white, size: 16),
+                  child: Icon(LucideIcons.video, color: Colors.white, size: 16),
                 ),
                 const Center(
-                  child: Icon(Icons.play_circle_outline, color: Colors.white, size: 40),
+                  child: Icon(LucideIcons.playCircle, color: Colors.white, size: 40),
                 ),
                 Positioned(
                   bottom: 8,
@@ -82,34 +83,34 @@ class VideoCard extends StatelessWidget {
                   right: 8,
                   child: Row(
                     children: [
-                      const Icon(Icons.play_arrow, color: Colors.white, size: 12),
+                      const Icon(LucideIcons.play, color: Colors.white, size: 12),
                       Text(
                         _formatNumber(video.views),
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 10,
-                          fontFamily: 'Poppins',
+                          fontFamily: 'TikTok Sans',
                           fontWeight: FontWeight.w600,
                         ),
                       ),
                       const SizedBox(width: 8),
-                      const Icon(Icons.favorite, color: Colors.white, size: 12),
+                      const Icon(LucideIcons.heart, color: Colors.white, size: 12),
                       Text(
                         _formatNumber(video.likes),
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 10,
-                          fontFamily: 'Poppins',
+                          fontFamily: 'TikTok Sans',
                         ),
                       ),
                       const SizedBox(width: 8),
-                      const Icon(Icons.comment, color: Colors.white, size: 12),
+                      const Icon(LucideIcons.messageSquare, color: Colors.white, size: 12),
                       Text(
                         '${video.comments}',
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 10,
-                          fontFamily: 'Poppins',
+                          fontFamily: 'TikTok Sans',
                         ),
                       ),
                     ],
@@ -125,7 +126,7 @@ class VideoCard extends StatelessWidget {
                   Text(
                     video.title,
                     style: const TextStyle(
-                      fontFamily: 'Poppins',
+                      fontFamily: 'TikTok Sans',
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
                       color: AppColors.textPrimary,
@@ -147,7 +148,7 @@ class VideoCard extends StatelessWidget {
                         child: Text(
                           video.playerName,
                           style: const TextStyle(
-                            fontFamily: 'Poppins',
+                            fontFamily: 'TikTok Sans',
                             fontSize: 11,
                             color: AppColors.textSecondary,
                           ),
@@ -155,11 +156,11 @@ class VideoCard extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      const Icon(Icons.star, color: AppColors.gold, size: 12),
+                      const Icon(LucideIcons.star, color: AppColors.gold, size: 12),
                       Text(
                         '${video.playerRating.toInt()}',
                         style: const TextStyle(
-                          fontFamily: 'Poppins',
+                          fontFamily: 'TikTok Sans',
                           fontSize: 10,
                           color: AppColors.textSecondary,
                         ),

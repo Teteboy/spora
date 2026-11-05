@@ -4,8 +4,9 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../providers/player_provider.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_text_styles.dart';
 import '../../core/constants/app_constants.dart';
-import '../../widgets/spora_logo.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -46,27 +47,36 @@ class _SearchScreenState extends State<SearchScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.backgroundLight,
-      appBar: AppBar(
-        backgroundColor: AppColors.backgroundLight,
-        title: const SporaLogo(height: 32),
-        actions: [
-          TextButton.icon(
-            onPressed: () => setState(() => _showFilters = !_showFilters),
-            icon: Icon(
-              _showFilters ? Icons.filter_list_off : Icons.filter_list,
-              size: 18,
-              color: AppColors.primary,
+      backgroundColor: AppColors.appBg,
+      body: SafeArea(
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(AppDimens.screenMargin,
+                  AppDimens.sm, AppDimens.screenMargin, AppDimens.md),
+              child: Row(
+                children: [
+                  _headerTile(
+                    icon: LucideIcons.arrowLeft,
+                    onTap: () => context.pop(),
+                  ),
+                  const SizedBox(width: AppDimens.md),
+                  Expanded(
+                    child: Text('Recherche',
+                        style: AppTextStyles.h1(),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis),
+                  ),
+                  _headerTile(
+                    icon: _showFilters
+                        ? LucideIcons.filterX
+                        : LucideIcons.slidersHorizontal,
+                    onTap: () =>
+                        setState(() => _showFilters = !_showFilters),
+                  ),
+                ],
+              ),
             ),
-            label: Text(
-              'Filtres',
-              style: const TextStyle(fontFamily: 'Poppins', fontSize: 13, color: AppColors.primary),
-            ),
-          ),
-        ],
-      ),
-      body: Column(
-        children: [
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: AppConstants.spacingMD),
             child: Column(
@@ -83,8 +93,8 @@ class _SearchScreenState extends State<SearchScreen> {
                     onChanged: (_) => _search(),
                     decoration: const InputDecoration(
                       hintText: 'Rechercher un joueur, poste, club...',
-                      hintStyle: TextStyle(fontFamily: 'Poppins', fontSize: 13, color: AppColors.textHint),
-                      prefixIcon: Icon(Icons.search, color: AppColors.textSecondary),
+                      hintStyle: TextStyle(fontFamily: 'TikTok Sans', fontSize: 13, color: AppColors.textHint),
+                      prefixIcon: Icon(LucideIcons.search, color: AppColors.textSecondary),
                       border: InputBorder.none,
                       contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                     ),
@@ -110,11 +120,11 @@ class _SearchScreenState extends State<SearchScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(Icons.search_off, size: 60, color: AppColors.textHint),
+                        const Icon(LucideIcons.searchX, size: 60, color: AppColors.textHint),
                         const SizedBox(height: 12),
-                        const Text('Aucun joueur trouvé', style: TextStyle(fontFamily: 'Poppins', fontSize: 16, color: AppColors.textSecondary)),
+                        const Text('Aucun joueur trouvé', style: TextStyle(fontFamily: 'TikTok Sans', fontSize: 16, color: AppColors.textSecondary)),
                         const SizedBox(height: 4),
-                        const Text('Modifiez vos critères de recherche', style: TextStyle(fontFamily: 'Poppins', fontSize: 13, color: AppColors.textHint)),
+                        const Text('Modifiez vos critères de recherche', style: TextStyle(fontFamily: 'TikTok Sans', fontSize: 13, color: AppColors.textHint)),
                       ],
                     ),
                   );
@@ -153,7 +163,7 @@ class _SearchScreenState extends State<SearchScreen> {
                                         gradient: LinearGradient(colors: AppColors.goldGradient),
                                         shape: BoxShape.circle,
                                       ),
-                                      child: const Icon(Icons.star, color: Colors.white, size: 10),
+                                      child: const Icon(LucideIcons.star, color: Colors.white, size: 10),
                                     ),
                                   ),
                               ],
@@ -163,18 +173,18 @@ class _SearchScreenState extends State<SearchScreen> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(player.fullName, style: const TextStyle(fontFamily: 'Poppins', fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                                  Text(player.fullName, style: const TextStyle(fontFamily: 'TikTok Sans', fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
                                   const SizedBox(height: 2),
                                   Text(
                                     '${player.primaryPosition.split(' ').first} • ${player.age} ans • ${player.nationality}',
-                                    style: const TextStyle(fontFamily: 'Poppins', fontSize: 12, color: AppColors.textSecondary),
+                                    style: const TextStyle(fontFamily: 'TikTok Sans', fontSize: 12, color: AppColors.textSecondary),
                                   ),
                                   const SizedBox(height: 4),
                                   Row(
                                     children: [
-                                      const Icon(Icons.sports_soccer, size: 12, color: AppColors.primary),
+                                      const Icon(LucideIcons.goal, size: 12, color: AppColors.primary),
                                       const SizedBox(width: 4),
-                                      Text(player.currentClub, style: const TextStyle(fontFamily: 'Poppins', fontSize: 12, color: AppColors.primary, fontWeight: FontWeight.w500)),
+                                      Text(player.currentClub, style: const TextStyle(fontFamily: 'TikTok Sans', fontSize: 12, color: AppColors.primary, fontWeight: FontWeight.w500)),
                                     ],
                                   ),
                                 ],
@@ -185,13 +195,13 @@ class _SearchScreenState extends State<SearchScreen> {
                               children: [
                                 Row(
                                   children: [
-                                    const Icon(Icons.star, color: AppColors.gold, size: 14),
+                                    const Icon(LucideIcons.star, color: AppColors.gold, size: 14),
                                     const SizedBox(width: 2),
-                                    Text(player.rating.toStringAsFixed(1), style: const TextStyle(fontFamily: 'Poppins', fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                                    Text(player.rating.toStringAsFixed(1), style: const TextStyle(fontFamily: 'TikTok Sans', fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
                                   ],
                                 ),
                                 const SizedBox(height: 4),
-                                Text('${player.profileViews} vues', style: const TextStyle(fontFamily: 'Poppins', fontSize: 10, color: AppColors.textSecondary)),
+                                Text('${player.profileViews} vues', style: const TextStyle(fontFamily: 'TikTok Sans', fontSize: 10, color: AppColors.textSecondary)),
                               ],
                             ),
                           ],
@@ -203,7 +213,25 @@ class _SearchScreenState extends State<SearchScreen> {
               },
             ),
           ),
-        ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Bordered icon tile used in the top bar (Figma header pattern, 44 px).
+  Widget _headerTile({required IconData icon, required VoidCallback onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: AppDimens.minTouch,
+        height: AppDimens.minTouch,
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(AppDimens.radiusInput),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: Icon(icon, size: 22, color: AppColors.textPrimary),
       ),
     );
   }
@@ -219,7 +247,7 @@ class _SearchScreenState extends State<SearchScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Filtres', style: TextStyle(fontFamily: 'Poppins', fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+          const Text('Filtres', style: TextStyle(fontFamily: 'TikTok Sans', fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
           const SizedBox(height: 12),
           Row(
             children: [
@@ -245,7 +273,7 @@ class _SearchScreenState extends State<SearchScreen> {
           const SizedBox(height: 8),
           Text(
             'Âge: ${_ageRange.start.toInt()} - ${_ageRange.end.toInt()} ans',
-            style: const TextStyle(fontFamily: 'Poppins', fontSize: 12, color: AppColors.textSecondary),
+            style: const TextStyle(fontFamily: 'TikTok Sans', fontSize: 12, color: AppColors.textSecondary),
           ),
           RangeSlider(
             values: _ageRange,
@@ -266,7 +294,7 @@ class _SearchScreenState extends State<SearchScreen> {
                   activeColor: AppColors.gold,
                 ),
               ),
-              const Text('Premium uniquement', style: TextStyle(fontFamily: 'Poppins', fontSize: 13, color: AppColors.textSecondary)),
+              const Text('Premium uniquement', style: TextStyle(fontFamily: 'TikTok Sans', fontSize: 13, color: AppColors.textSecondary)),
             ],
           ),
         ],
@@ -294,10 +322,10 @@ class _FilterDropdown extends StatelessWidget {
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           value: value,
-          hint: Text(hint, style: const TextStyle(fontFamily: 'Poppins', fontSize: 12, color: AppColors.textHint)),
+          hint: Text(hint, style: const TextStyle(fontFamily: 'TikTok Sans', fontSize: 12, color: AppColors.textHint)),
           isExpanded: true,
-          icon: const Icon(Icons.keyboard_arrow_down, size: 16, color: AppColors.textSecondary),
-          items: items.map((i) => DropdownMenuItem(value: i, child: Text(i, style: const TextStyle(fontFamily: 'Poppins', fontSize: 12)))).toList(),
+          icon: const Icon(LucideIcons.chevronDown, size: 16, color: AppColors.textSecondary),
+          items: items.map((i) => DropdownMenuItem(value: i, child: Text(i, style: const TextStyle(fontFamily: 'TikTok Sans', fontSize: 12)))).toList(),
           onChanged: onChanged,
         ),
       ),

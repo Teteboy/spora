@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../core/theme/app_colors.dart';
 import '../../providers/messaging_provider.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 class RecruiterMainShell extends StatefulWidget {
   final Widget child;
@@ -17,23 +18,27 @@ class _RecruiterMainShellState extends State<RecruiterMainShell> {
 
   final List<_NavItem> _items = const [
     _NavItem(
-        icon: Icons.dashboard_outlined,
+        icon: LucideIcons.layoutDashboard,
         label: 'Dashboard',
         route: '/recruiter/dashboard'),
     _NavItem(
-        icon: Icons.people_outline,
+        icon: LucideIcons.users,
         label: 'Candidats',
         route: '/recruiter/players'),
     _NavItem(
-        icon: Icons.search, label: 'Recherche', route: '/recruiter/search'),
+        icon: LucideIcons.search,
+        label: 'Recherche',
+        route: '/recruiter/search'),
     _NavItem(
-        icon: Icons.message_outlined,
+        icon: LucideIcons.play,
+        label: 'Highlights',
+        route: '/recruiter/highlights'),
+    _NavItem(
+        icon: LucideIcons.messageSquare,
         label: 'Messages',
         route: '/recruiter/messages'),
     _NavItem(
-        icon: Icons.person_outline,
-        label: 'Profil',
-        route: '/recruiter/profile'),
+        icon: LucideIcons.user, label: 'Profil', route: '/recruiter/profile'),
   ];
 
   @override
@@ -90,7 +95,7 @@ class _RecruiterMainShellState extends State<RecruiterMainShell> {
                           child: Icon(
                             item.icon,
                             color: isActive
-                                ? AppColors.gold
+                                ? AppColors.primary
                                 : AppColors.textSecondary,
                             size: isActive ? 26 : 22,
                           ),
@@ -99,12 +104,12 @@ class _RecruiterMainShellState extends State<RecruiterMainShell> {
                         Text(
                           item.label,
                           style: TextStyle(
-                            fontFamily: 'Poppins',
-                            fontSize: 9,
+                            fontFamily: 'TikTok Sans',
+                            fontSize: 10,
                             fontWeight:
                                 isActive ? FontWeight.w700 : FontWeight.w400,
                             color: isActive
-                                ? AppColors.gold
+                                ? AppColors.primary
                                 : AppColors.textSecondary,
                           ),
                         ),

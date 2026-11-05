@@ -54,7 +54,7 @@ class StepIndicator extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.w700,
-                            fontFamily: 'Poppins',
+                            fontFamily: 'TikTok Sans',
                             color: isActive || isDone ? Colors.white : AppColors.textSecondary,
                           ),
                         ),
@@ -64,7 +64,7 @@ class StepIndicator extends StatelessWidget {
                         child: Text(
                           steps[index],
                           style: TextStyle(
-                            fontFamily: 'Poppins',
+                            fontFamily: 'TikTok Sans',
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
                             color: isActive || isDone ? Colors.white : AppColors.textSecondary,

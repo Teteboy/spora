@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/player_model.dart';
 import '../core/theme/app_colors.dart';
 import '../core/constants/app_constants.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 class PlayerCard extends StatelessWidget {
   final PlayerModel player;
@@ -51,7 +52,7 @@ class PlayerCard extends StatelessWidget {
                     errorBuilder: (_, __, ___) => Container(
                       height: 130,
                       color: AppColors.background,
-                      child: const Icon(Icons.person, size: 50, color: AppColors.textSecondary),
+                      child: const Icon(LucideIcons.user, size: 50, color: AppColors.textSecondary),
                     ),
                   ),
                 ),
@@ -68,7 +69,7 @@ class PlayerCard extends StatelessWidget {
                       child: const Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.star, color: Colors.white, size: 10),
+                          Icon(LucideIcons.star, color: Colors.white, size: 10),
                           SizedBox(width: 2),
                           Text(
                             'PRO',
@@ -76,7 +77,7 @@ class PlayerCard extends StatelessWidget {
                               color: Colors.white,
                               fontSize: 9,
                               fontWeight: FontWeight.w700,
-                              fontFamily: 'Poppins',
+                              fontFamily: 'TikTok Sans',
                             ),
                           ),
                         ],
@@ -99,7 +100,7 @@ class PlayerCard extends StatelessWidget {
                           ],
                         ),
                         child: Icon(
-                          isSaved ? Icons.bookmark : Icons.bookmark_border,
+                          isSaved ? LucideIcons.bookmark : LucideIcons.bookmark,
                           size: 14,
                           color: isSaved ? AppColors.gold : AppColors.textSecondary,
                         ),
@@ -116,7 +117,7 @@ class PlayerCard extends StatelessWidget {
                   Text(
                     player.fullName,
                     style: const TextStyle(
-                      fontFamily: 'Poppins',
+                      fontFamily: 'TikTok Sans',
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
                       color: AppColors.textPrimary,
@@ -128,7 +129,7 @@ class PlayerCard extends StatelessWidget {
                   Text(
                     '${player.primaryPosition.split(' ').first} • ${player.age} ans',
                     style: const TextStyle(
-                      fontFamily: 'Poppins',
+                      fontFamily: 'TikTok Sans',
                       fontSize: 10,
                       color: AppColors.textSecondary,
                     ),
@@ -138,13 +139,13 @@ class PlayerCard extends StatelessWidget {
                   const SizedBox(height: 4),
                   Row(
                     children: [
-                      const Icon(Icons.sports_soccer, size: 10, color: AppColors.primary),
+                      const Icon(LucideIcons.goal, size: 10, color: AppColors.primary),
                       const SizedBox(width: 3),
                       Expanded(
                         child: Text(
                           player.currentClub,
                           style: const TextStyle(
-                            fontFamily: 'Poppins',
+                            fontFamily: 'TikTok Sans',
                             fontSize: 10,
                             color: AppColors.primary,
                             fontWeight: FontWeight.w500,
@@ -170,7 +171,7 @@ class PlayerCard extends StatelessWidget {
                       child: const Text(
                         'Voir profil',
                         style: TextStyle(
-                          fontFamily: 'Poppins',
+                          fontFamily: 'TikTok Sans',
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
                           color: AppColors.primary,

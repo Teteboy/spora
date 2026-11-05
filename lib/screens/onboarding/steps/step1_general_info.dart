@@ -1,233 +1,275 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
-import 'package:provider/provider.dart';
-import '../../../providers/onboarding_provider.dart';
-import '../../../core/theme/app_colors.dart';
-import '../../../core/constants/app_constants.dart';
-import '../../../widgets/custom_text_field.dart';
+import 'package:image_picker/image_picker.dart';
 
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_text_styles.dart';
+import '../onboarding_draft.dart';
+import '../onboarding_widgets.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
+
+enum _PhotoAction { gallery, camera, remove }
+
+/// Étape 1 — Informations générales.
 class Step1GeneralInfo extends StatefulWidget {
-  const Step1GeneralInfo({super.key});
+  const Step1GeneralInfo({
+    super.key,
+    required this.draft,
+    required this.onChanged,
+    required this.onBack,
+    required this.onContinue,
+    this.emailLocked = false,
+  });
+
+  final PlayerDraft draft;
+  final VoidCallback onChanged;
+  final VoidCallback onBack;
+  final VoidCallback onContinue;
+
+  /// E-mail comes from the account and is read-only (Figma muted field).
+  final bool emailLocked;
 
   @override
   State<Step1GeneralInfo> createState() => _Step1GeneralInfoState();
 }
 
 class _Step1GeneralInfoState extends State<Step1GeneralInfo> {
-  final _formKey = GlobalKey<FormState>();
-  final _nameCtrl = TextEditingController();
-  final _emailCtrl = TextEditingController();
-  String? _selectedPosition;
-  String? _selectedAge;
+  late final TextEditingController _first = TextEditingController(text: widget.draft.firstName);
+  late final TextEditingController _last = TextEditingController(text: widget.draft.lastName);
+  late final TextEditingController _city = TextEditingController(text: widget.draft.city);
+  late final TextEditingController _email = TextEditingController(text: widget.draft.email);
+  bool _submitted = false;
+  bool _processingPhoto = false;
 
-  final List<String> _ages = List.generate(30, (i) => '${i + 14} ans');
+  PlayerDraft get d => widget.draft;
+
+  @override
+  void dispose() {
+    _first.dispose();
+    _last.dispose();
+    _city.dispose();
+    _email.dispose();
+    super.dispose();
+  }
+
+  String? _required(String v, String msg) => _submitted && v.trim().isEmpty ? msg : null;
+
+  String? get _dobError {
+    if (!_submitted && d.birthDate == null) return null;
+    if (d.birthDate == null) return 'Indiquez votre date de naissance';
+    final age = d.age ?? 0;
+    if (age < 13) return 'Vous devez avoir au moins 13 ans pour créer un profil';
+    return null;
+  }
+
+  String? get _emailError {
+    if (!_submitted) return null;
+    if (d.email.trim().isEmpty) return 'Indiquez votre adresse e-mail';
+    if (!isValidEmail(d.email)) return 'Adresse e-mail invalide';
+    return null;
+  }
+
+  bool get _valid => d.generalComplete && (d.age ?? 0) >= 13;
+
+  Future<void> _pickPhoto() async {
+    final action = await showOnbChoiceSheet<_PhotoAction>(
+      context,
+      title: 'Photo de profil',
+      choices: [
+        const OnbChoice(_PhotoAction.gallery, 'Choisir dans la galerie', icon: LucideIcons.galleryHorizontal),
+        const OnbChoice(_PhotoAction.camera, 'Prendre une photo', icon: LucideIcons.camera),
+        if (d.photo != null)
+          const OnbChoice(_PhotoAction.remove, 'Supprimer la photo',
+              icon: LucideIcons.trash2, destructive: true),
+      ],
+    );
+    if (action == null || !mounted) return;
+    if (action == _PhotoAction.remove) {
+      setState(() => d.photo = null);
+      widget.onChanged();
+      return;
+    }
+    try {
+      final file = await ImagePicker().pickImage(
+        source: action == _PhotoAction.camera ? ImageSource.camera : ImageSource.gallery,
+        maxWidth: 1600,
+        maxHeight: 1600,
+        imageQuality: 90,
+        preferredCameraDevice: CameraDevice.front,
+      );
+      if (file == null || !mounted) return;
+      setState(() => _processingPhoto = true);
+      final bytes = await file.readAsBytes();
+      final square = await cropToSquare(bytes);
+      if (!mounted) return;
+      setState(() {
+        d.photo = square;
+        _processingPhoto = false;
+      });
+      widget.onChanged();
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _processingPhoto = false);
+      showOnbSnack(context, 'Impossible d’ajouter la photo. Réessayez.', error: true);
+    }
+  }
+
+  Future<void> _pickDate() async {
+    FocusScope.of(context).unfocus();
+    final now = DateTime.now();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: d.birthDate ?? DateTime(now.year - 18, now.month, now.day),
+      firstDate: DateTime(now.year - 60),
+      lastDate: now,
+      initialEntryMode: DatePickerEntryMode.calendarOnly,
+      helpText: 'Date de naissance',
+      cancelText: 'Annuler',
+      confirmText: 'Valider',
+    );
+    if (picked == null || !mounted) return;
+    setState(() => d.birthDate = picked);
+    widget.onChanged();
+  }
+
+  Future<void> _pickNationality() async {
+    FocusScope.of(context).unfocus();
+    final v = await showOnbOptionsSheet(context,
+        title: 'Nationalité', options: kCountries, selected: d.nationality);
+    if (v == null || !mounted) return;
+    setState(() => d.nationality = v);
+    widget.onChanged();
+  }
+
+  void _continue() {
+    FocusScope.of(context).unfocus();
+    setState(() => _submitted = true);
+    if (_valid) {
+      widget.onContinue();
+    } else {
+      showOnbSnack(context, 'Complétez les champs obligatoires pour continuer.');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppConstants.spacingMD),
-      child: Column(
-        children: [
-          Expanded(
-            child: SingleChildScrollView(
-              child: Container(
-                padding: const EdgeInsets.all(AppConstants.spacingMD),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(AppConstants.radiusXL),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.shadow,
-                      blurRadius: 16,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Infos générales',
-                        style: TextStyle(
-                          fontFamily: 'Poppins',
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.textPrimary,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      const Text(
-                        'Remplis les informations ci-dessous.',
-                        style: TextStyle(
-                          fontFamily: 'Poppins',
-                          fontSize: 13,
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Profile photo
-                          GestureDetector(
-                            onTap: () {},
-                            child: Container(
-                              width: 90,
-                              height: 100,
-                              decoration: BoxDecoration(
-                                color: AppColors.background,
-                                borderRadius: BorderRadius.circular(AppConstants.radiusMD),
-                                border: Border.all(color: AppColors.border),
-                              ),
-                              child: const Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(Icons.camera_alt_outlined, color: AppColors.primaryLight, size: 28),
-                                  SizedBox(height: 4),
-                                  Text(
-                                    'Photo de profil\n(optionnel)',
-                                    textAlign: TextAlign.center,
-                                    style: TextStyle(
-                                      fontFamily: 'Poppins',
-                                      fontSize: 9,
-                                      color: AppColors.textSecondary,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          // Form fields
-                          Expanded(
-                            child: Column(
-                              children: [
-                                CustomTextField(
-                                  hint: 'Nom et prénom',
-                                  controller: _nameCtrl,
-                                  validator: (v) => v!.isEmpty ? 'Requis' : null,
-                                ),
-                                const SizedBox(height: 8),
-                                Row(
-                                  children: [
-                                    Expanded(
-                                      child: CustomDropdown(
-                                        hint: 'Âge',
-                                        value: _selectedAge,
-                                        items: _ages,
-                                        onChanged: (v) => setState(() => _selectedAge = v),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Expanded(
-                                      child: CustomDropdown(
-                                        hint: 'Poste',
-                                        value: _selectedPosition,
-                                        items: AppConstants.positions,
-                                        onChanged: (v) => setState(() => _selectedPosition = v),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 8),
-                                CustomTextField(
-                                  hint: 'Email',
-                                  controller: _emailCtrl,
-                                  keyboardType: TextInputType.emailAddress,
-                                  validator: (v) => v!.isEmpty ? 'Requis' : null,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      const Text(
-                        'Email',
-                        style: TextStyle(
-                          fontFamily: 'Poppins',
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.textPrimary,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      CustomTextField(
-                        hint: 'Email',
-                        keyboardType: TextInputType.emailAddress,
-                      ),
-                      const SizedBox(height: 12),
-                      CustomTextField(
-                        hint: 'Mot de passe',
-                        isPassword: true,
-                      ),
-                    ],
-                  ),
-                ),
-              ).animate().fadeIn(duration: 400.ms).slideX(begin: 0.05, duration: 400.ms),
-            ),
-          ),
-          const SizedBox(height: 16),
-          _buildBottomSection(context),
-          const SizedBox(height: 8),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildBottomSection(BuildContext context) {
-    final onboarding = context.read<OnboardingProvider>();
-    return Column(
+    return OnbScaffold(
+      title: 'Informations générales',
+      eyebrow: 'Étape 1 sur 3',
+      progress: 1 / 3,
+      onBack: widget.onBack,
+      bottom: OnbPrimaryButton(label: 'Continuer', onPressed: _continue),
       children: [
-        SizedBox(
-          width: double.infinity,
-          child: ElevatedButton(
-            onPressed: () {
-              onboarding.updateStep1(
-                firstName: _nameCtrl.text.split(' ').first,
-                lastName: _nameCtrl.text.split(' ').length > 1 ? _nameCtrl.text.split(' ').last : '',
-                email: _emailCtrl.text,
-              );
-              onboarding.nextStep();
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        Stack(
+          alignment: Alignment.topCenter,
+          children: [
+            OnbMediaPicker(
+              icon: LucideIcons.camera,
+              label: 'Ajouter une photo',
+              changeLabel: 'Modifier la photo',
+              image: d.photo,
+              onTap: _pickPhoto,
             ),
-            child: const Text(
-              'Continuer',
-              style: TextStyle(fontFamily: 'Poppins', fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white),
-            ),
-          ),
+            if (_processingPhoto)
+              const Positioned(
+                top: 40,
+                child: CircularProgressIndicator(color: AppColors.primary),
+              ),
+          ],
         ),
         const SizedBox(height: 8),
-        RichText(
-          textAlign: TextAlign.center,
-          text: const TextSpan(
-            style: TextStyle(fontFamily: 'Poppins', fontSize: 11, color: AppColors.textSecondary),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: OnbField(
+                label: 'Prénom *',
+                hint: 'Votre prénom',
+                controller: _first,
+                textCapitalization: TextCapitalization.words,
+                autofillHints: const [AutofillHints.givenName],
+                errorText: _required(d.firstName, 'Indiquez votre prénom'),
+                onChanged: (v) {
+                  d.firstName = v;
+                  widget.onChanged();
+                },
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: OnbField(
+                label: 'Nom *',
+                hint: 'Votre nom',
+                controller: _last,
+                textCapitalization: TextCapitalization.words,
+                autofillHints: const [AutofillHints.familyName],
+                errorText: _required(d.lastName, 'Indiquez votre nom'),
+                onChanged: (v) {
+                  d.lastName = v;
+                  widget.onChanged();
+                },
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        OnbSelectBox(
+          label: 'Date de naissance *',
+          hint: 'JJ mois AAAA',
+          value: d.birthDate == null ? null : formatFrDate(d.birthDate!),
+          icon: LucideIcons.calendarDays,
+          errorText: _dobError,
+          onTap: _pickDate,
+        ),
+        if (d.isMinor && _dobError == null) ...[
+          const SizedBox(height: 8),
+          Row(
             children: [
-              TextSpan(text: 'En créant un profil joueur, tu acceptes nos '),
-              TextSpan(
-                text: 'Conditions générales',
-                style: TextStyle(
-                  color: AppColors.primaryLight,
-                  decoration: TextDecoration.underline,
+              const Icon(LucideIcons.shield, size: 16, color: AppColors.primary),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  'Moins de 18 ans : l’accord d’un tuteur sera demandé à l’étape suivante.',
+                  style: AppTextStyles.caption(color: AppColors.primary),
                 ),
               ),
-              TextSpan(text: ' et notre '),
-              TextSpan(
-                text: 'Politique de confidentialité',
-                style: TextStyle(
-                  color: AppColors.primaryLight,
-                  decoration: TextDecoration.underline,
-                ),
-              ),
-              TextSpan(text: '.'),
             ],
           ),
+        ],
+        const SizedBox(height: 16),
+        OnbSelectBox(
+          label: 'Nationalité *',
+          hint: 'Choisir un pays',
+          value: d.nationality,
+          errorText: _submitted && d.nationality == null ? 'Choisissez votre nationalité' : null,
+          onTap: _pickNationality,
+        ),
+        const SizedBox(height: 16),
+        OnbField(
+          label: 'Ville *',
+          hint: 'Votre ville',
+          controller: _city,
+          textCapitalization: TextCapitalization.words,
+          autofillHints: const [AutofillHints.addressCity],
+          errorText: _required(d.city, 'Indiquez votre ville'),
+          onChanged: (v) {
+            d.city = v;
+            widget.onChanged();
+          },
+        ),
+        const SizedBox(height: 16),
+        OnbField(
+          label: widget.emailLocked ? 'Adresse e-mail' : 'Adresse e-mail *',
+          hint: 'nom@email.com',
+          controller: _email,
+          enabled: !widget.emailLocked,
+          keyboardType: TextInputType.emailAddress,
+          textInputAction: TextInputAction.done,
+          autofillHints: const [AutofillHints.email],
+          errorText: widget.emailLocked ? null : _emailError,
+          onChanged: (v) {
+            d.email = v.trim();
+            widget.onChanged();
+          },
         ),
       ],
     );

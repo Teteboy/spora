@@ -1,331 +1,313 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
-import '../../providers/auth_provider.dart';
-import '../../providers/theme_provider.dart';
-import '../../core/theme/app_colors.dart';
-import '../../core/constants/app_constants.dart';
-import '../../widgets/spora_logo.dart';
 
-class SettingsScreen extends StatelessWidget {
+import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_text_styles.dart';
+import '../../providers/theme_provider.dart';
+import '../account/account_widgets.dart';
+import 'app_locale.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
+
+/// "/settings" — frame "Paramètres".
+class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final auth = context.watch<AuthProvider>();
+  State<SettingsScreen> createState() => _SettingsScreenState();
+}
 
-    return Scaffold(
-      backgroundColor: AppColors.backgroundLight,
-      appBar: AppBar(
-        backgroundColor: AppColors.backgroundLight,
-        title: const Text('Menu',
-            style: TextStyle(
-                fontFamily: 'Poppins',
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-                color: AppColors.textPrimary)),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(AppConstants.spacingMD),
-        child: Column(
+class _SettingsScreenState extends State<SettingsScreen> {
+  bool _dataSaver = true;
+  bool _wifiUploads = true;
+  int _autoplay = 0; // 0 Wi-Fi seulement, 1 Toujours, 2 Jamais
+  int _quality = 0; // 0 Auto, 1 360p, 2 720p
+
+  @override
+  void initState() {
+    super.initState();
+    AppLocale.load();
+    DataSaverPrefs.load().then((m) {
+      if (!mounted) return;
+      setState(() {
+        _dataSaver = m[DataSaverPrefs.keySaver] as bool;
+        _autoplay = m[DataSaverPrefs.keyAutoplay] as int;
+        _quality = m[DataSaverPrefs.keyQuality] as int;
+        _wifiUploads = m[DataSaverPrefs.keyWifiUploads] as bool;
+      });
+    });
+  }
+
+  void _persist() => DataSaverPrefs.save(
+      saver: _dataSaver, autoplay: _autoplay, quality: _quality, wifiUploads: _wifiUploads);
+
+  void _setDataSaver(bool v) {
+    setState(() {
+      _dataSaver = v;
+      if (v) {
+        _wifiUploads = true;
+        _autoplay = 2; // no autoplay
+        _quality = 1;
+      }
+    });
+    _persist();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<Locale>(
+      valueListenable: AppLocale.notifier,
+      builder: (context, locale, _) {
+        final t = AppLocale.t;
+        final themeProvider = context.watch<ThemeProvider>();
+        final mode = themeProvider.themeMode;
+        final p = AccountPalette.of(context);
+
+        return AccountScaffold(
+          title: t('Paramètres', 'Settings'),
+          onBack: () => accountBack(context, fallback: '/profile'),
           children: [
-            // Profile summary
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                gradient:
-                    const LinearGradient(colors: AppColors.primaryGradient),
-                borderRadius: BorderRadius.circular(AppConstants.radiusLG),
-              ),
-              child: Row(
+            _Header(t('Préférences', 'Preferences')),
+            AccountCard(
+              padding: const EdgeInsets.symmetric(vertical: AppDimens.sm),
+              child: Column(
                 children: [
-                  CircleAvatar(
-                    radius: 30,
-                    backgroundImage: NetworkImage(auth.currentUser?.avatarUrl ??
-                        'https://i.pravatar.cc/80?u=me'),
+                  _OptionsRow(
+                    icon: LucideIcons.languages,
+                    title: t('Langue', 'Language'),
+                    options: const ['Français', 'English'],
+                    selected: AppLocale.isEnglish ? 1 : 0,
+                    onSelect: (i) => AppLocale.set(i == 1 ? AppLocale.en : AppLocale.fr),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(auth.currentUser?.name ?? 'Joueur SPORA',
-                            style: const TextStyle(
-                                fontFamily: 'Poppins',
-                                fontSize: 16,
-                                fontWeight: FontWeight.w700,
-                                color: Colors.white)),
-                        Text(auth.currentUser?.email ?? '',
-                            style: const TextStyle(
-                                fontFamily: 'Poppins',
-                                fontSize: 12,
-                                color: Colors.white70)),
-                        const SizedBox(height: 4),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 2),
-                          decoration: BoxDecoration(
-                              gradient: const LinearGradient(
-                                  colors: AppColors.goldGradient),
-                              borderRadius: BorderRadius.circular(100)),
-                          child: const Text('PREMIUM',
-                              style: TextStyle(
-                                  fontFamily: 'Poppins',
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w700,
-                                  color: Colors.white)),
-                        ),
-                      ],
+                  _OptionsRow(
+                    icon: LucideIcons.moon,
+                    title: t('Thème', 'Theme'),
+                    options: [t('Système', 'System'), t('Clair', 'Light'), t('Sombre', 'Dark')],
+                    selected: mode == ThemeMode.system ? 0 : (mode == ThemeMode.light ? 1 : 2),
+                    onSelect: (i) => themeProvider.setThemeMode(
+                        const [ThemeMode.system, ThemeMode.light, ThemeMode.dark][i]),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: AppDimens.lg),
+                    child: SwitchRow(
+                      title: t('Mode économie de données', 'Data saver mode'),
+                      value: _dataSaver,
+                      onChanged: _setDataSaver,
                     ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(AppDimens.lg, 0, AppDimens.lg, AppDimens.sm),
+                    child: Text(
+                      t('Posters avant lecture, qualité réduite, envois en Wi-Fi uniquement, pas de lecture automatique. Économies variables selon votre usage.',
+                          'Posters before playback, reduced quality, Wi-Fi-only uploads, no autoplay. Savings vary with usage.'),
+                      style: AppTextStyles.caption(color: p.text3),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: AppDimens.lg),
+                    child: SwitchRow(
+                      title: t('Envois vidéo en Wi-Fi uniquement', 'Upload videos on Wi-Fi only'),
+                      value: _wifiUploads,
+                      onChanged: (v) {
+                        setState(() => _wifiUploads = v);
+                        _persist();
+                      },
+                    ),
+                  ),
+                  _OptionsRow(
+                    icon: LucideIcons.play,
+                    title: t('Lecture automatique', 'Autoplay'),
+                    options: [t('Wi-Fi seulement', 'Wi-Fi only'), t('Toujours', 'Always'), t('Jamais', 'Never')],
+                    selected: _autoplay,
+                    onSelect: (i) {
+                      setState(() => _autoplay = i);
+                      _persist();
+                    },
+                  ),
+                  _OptionsRow(
+                    icon: LucideIcons.video,
+                    title: t('Qualité vidéo', 'Video quality'),
+                    options: const ['Auto', '360p', '720p'],
+                    selected: _quality,
+                    onSelect: (i) {
+                      setState(() => _quality = i);
+                      _persist();
+                    },
                   ),
                 ],
               ),
-            ).animate().fadeIn(duration: 400.ms),
-            const SizedBox(height: 20),
-            // Menu groups
-            _SettingsGroup(
-              title: 'Mon compte',
-              items: [
-                _SettingsItem(
-                    icon: Icons.person_outline,
-                    label: 'Mon profil',
-                    onTap: () => context.go('/profile')),
-                _SettingsItem(
-                    icon: Icons.message_outlined,
-                    label: 'Messages',
-                    onTap: () => context.push('/messages')),
-                _SettingsItem(
-                    icon: Icons.notifications_outlined,
-                    label: 'Notifications',
-                    onTap: () => context.push('/notifications')),
-                _SettingsItem(
-                    icon: Icons.workspace_premium,
-                    label: 'Abonnement Premium',
-                    onTap: () => context.push('/premium'),
-                    iconColor: AppColors.gold),
-                _SettingsItem(
-                    icon: Icons.badge_outlined,
-                    label: 'Espace Agent',
-                    onTap: () => context.push('/agent'),
-                    iconColor: AppColors.primary),
-                _SettingsItem(
-                    icon: Icons.business_center_outlined,
-                    label: 'Espace Recruteur',
-                    onTap: () => context.push('/recruiter'),
-                    iconColor: AppColors.primary),
-              ],
             ),
-            const SizedBox(height: 16),
-            // Dark Mode Toggle
-            Consumer<ThemeProvider>(
-              builder: (context, themeProvider, _) {
-                return Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(AppConstants.radiusLG),
-                    boxShadow: [
-                      BoxShadow(
-                          color: AppColors.shadow,
-                          blurRadius: 8,
-                          offset: const Offset(0, 2))
-                    ],
-                  ),
-                  child: SwitchListTile(
-                    secondary: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: AppColors.primary.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Icon(Icons.dark_mode_outlined,
-                          color: AppColors.primary),
-                    ),
-                    title: const Text('Mode sombre',
-                        style: TextStyle(
-                            fontFamily: 'Poppins',
-                            fontSize: 15,
-                            fontWeight: FontWeight.w500)),
-                    value: themeProvider.isDarkMode,
-                    onChanged: (value) => themeProvider.toggleTheme(),
-                    activeColor: AppColors.gold,
-                  ),
-                );
-              },
-            ),
-            const SizedBox(height: 16),
-            _SettingsGroup(
-              title: 'Découverte',
-              items: [
-                _SettingsItem(
-                    icon: Icons.search,
-                    label: 'Rechercher des joueurs',
-                    onTap: () => context.go('/search')),
-                _SettingsItem(
-                    icon: Icons.videocam_outlined,
-                    label: 'Explorer les highlights',
-                    onTap: () => context.go('/highlights')),
-                _SettingsItem(
-                    icon: Icons.bookmark_outline,
-                    label: 'Joueurs sauvegardés',
-                    onTap: () => context.go('/profile')),
-              ],
-            ),
-            const SizedBox(height: 16),
-            _SettingsGroup(
-              title: 'Application',
-              items: [
-                _SettingsItem(
-                    icon: Icons.language,
-                    label: 'Langue',
-                    trailing: const Text('Français',
-                        style: TextStyle(
-                            fontFamily: 'Poppins',
-                            fontSize: 13,
-                            color: AppColors.textSecondary)),
-                    onTap: () {}),
-                _SettingsItem(
-                    icon: Icons.dark_mode_outlined,
-                    label: 'Mode sombre',
-                    trailing: Switch(
-                        value: false,
-                        onChanged: (_) {},
-                        activeColor: AppColors.primary),
-                    onTap: () {}),
-                _SettingsItem(
-                    icon: Icons.lock_outline,
-                    label: 'Confidentialité',
-                    onTap: () {}),
-                _SettingsItem(
-                    icon: Icons.help_outline,
-                    label: 'Aide & Support',
-                    onTap: () {}),
-                _SettingsItem(
-                    icon: Icons.info_outline,
-                    label: 'À propos de SPORA',
-                    onTap: () {}),
-              ],
-            ),
-            const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: () {
-                  auth.logout();
-                  context.go('/login');
-                },
-                icon: const Icon(Icons.logout, color: AppColors.error),
-                label: const Text('Se déconnecter',
-                    style: TextStyle(
-                        fontFamily: 'Poppins',
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.error)),
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  side: const BorderSide(color: AppColors.error),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
-                ),
-              ),
-            ).animate().fadeIn(duration: 400.ms, delay: 300.ms),
-            const SizedBox(height: 24),
-            const SporaLogo(height: 28),
-            const SizedBox(height: 8),
-            const Text('Version 1.0.0',
-                style: TextStyle(
-                    fontFamily: 'Poppins',
-                    fontSize: 11,
-                    color: AppColors.textHint)),
-            const SizedBox(height: 24),
+            _Header(t('Votre compte', 'Your account')),
+            _LinkCard(rows: [
+              _Link(LucideIcons.bell, t('Notifications', 'Notifications'),
+                  t('Choisir les alertes reçues', 'Choose which alerts you get'),
+                  () => context.push('/settings/notifications')),
+              _Link(LucideIcons.shield, t('Confidentialité', 'Privacy'),
+                  t('Visibilité, coordonnées, blocages', 'Visibility, contact details, blocks'),
+                  () => context.push('/settings/privacy')),
+              _Link(LucideIcons.lock, t('Sécurité', 'Security'),
+                  t('Mot de passe et appareils', 'Password and devices'),
+                  () => context.push('/settings/security')),
+            ]),
+            _Header(t('Vos données', 'Your data')),
+            _LinkCard(rows: [
+              _Link(LucideIcons.download, t('Exporter mes données', 'Export my data'),
+                  t('Demander une copie de vos informations', 'Request a copy of your information'),
+                  () => showAccountSnack(context,
+                      t('Demande envoyée. Vous recevrez un e-mail.', 'Request sent. You will receive an e-mail.'))),
+              _Link(LucideIcons.trash2, t('Supprimer mon compte', 'Delete my account'),
+                  t('Confirmation en deux étapes', 'Two-step confirmation'),
+                  () => context.push('/delete-account')),
+            ]),
+            _Header(t('Aide', 'Help')),
+            _LinkCard(rows: [
+              _Link(LucideIcons.helpCircle, t('Aide et support', 'Help & support'),
+                  t('FAQ et contact', 'FAQ and contact'), () => context.push('/help')),
+              _Link(LucideIcons.flag, t('Signaler un problème', 'Report a problem'),
+                  t('Bug, contenu ou comportement', 'Bug, content or behaviour'), () => context.push('/report')),
+            ]),
+            _Header(t('À propos', 'About')),
+            _LinkCard(rows: [
+              _Link(LucideIcons.info, 'SPORA · Version 1.0',
+                  t('Maquette de démonstration', 'Demo prototype'), () => _about(context)),
+              _Link(LucideIcons.fileText, t('Conditions d’utilisation', 'Terms of use'), null,
+                  () => showAccountSnack(context, t('Bientôt disponible', 'Coming soon'))),
+              _Link(LucideIcons.shieldCheck, t('Politique de confidentialité', 'Privacy policy'), null,
+                  () => showAccountSnack(context, t('Bientôt disponible', 'Coming soon'))),
+            ]),
           ],
+        );
+      },
+    );
+  }
+
+  void _about(BuildContext context) {
+    showAboutDialog(
+      context: context,
+      applicationName: 'SPORA',
+      applicationVersion: '1.0.0',
+      applicationLegalese: '© SPORA',
+      children: [
+        const SizedBox(height: AppDimens.md),
+        Text(
+          AppLocale.t('La plateforme qui connecte joueurs, agents et clubs.',
+              'The platform connecting players, agents and clubs.'),
+          style: AppTextStyles.body(),
         ),
+      ],
+    );
+  }
+}
+
+class _Header extends StatelessWidget {
+  final String text;
+  const _Header(this.text);
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: AppDimens.lg, bottom: AppDimens.md),
+      child: Text(text, style: AppTextStyles.h2(color: AccountPalette.of(context).text)),
+    );
+  }
+}
+
+/// Row with icon, title and inline "A · B · C" choices (selected in brand blue).
+class _OptionsRow extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final List<String> options;
+  final int selected;
+  final ValueChanged<int> onSelect;
+
+  const _OptionsRow({
+    required this.icon,
+    required this.title,
+    required this.options,
+    required this.selected,
+    required this.onSelect,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final p = AccountPalette.of(context);
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: AppDimens.lg, vertical: AppDimens.sm),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(top: 2),
+            child: Icon(icon, color: AppColors.primary, size: 22),
+          ),
+          const SizedBox(width: AppDimens.lg),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: AppTextStyles.body(color: p.text)),
+                Wrap(
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    for (var i = 0; i < options.length; i++) ...[
+                      Semantics(
+                        button: true,
+                        selected: i == selected,
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(AppDimens.radiusSm),
+                          onTap: () => onSelect(i),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 2),
+                            child: Text(
+                              options[i],
+                              style: i == selected
+                                  ? AppTextStyles.bodyStrong(color: AppColors.primary)
+                                  : AppTextStyles.body(color: p.text2),
+                            ),
+                          ),
+                        ),
+                      ),
+                      if (i < options.length - 1)
+                        Text(' · ', style: AppTextStyles.body(color: p.text3)),
+                    ],
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
 }
 
-class _SettingsGroup extends StatelessWidget {
+class _Link {
+  final IconData icon;
   final String title;
-  final List<_SettingsItem> items;
-  const _SettingsGroup({required this.title, required this.items});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(AppConstants.radiusLG),
-        boxShadow: [
-          BoxShadow(
-              color: AppColors.shadow,
-              blurRadius: 8,
-              offset: const Offset(0, 2))
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-            child: Text(title,
-                style: const TextStyle(
-                    fontFamily: 'Poppins',
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textSecondary,
-                    letterSpacing: 0.5)),
-          ),
-          ...items.asMap().entries.map((e) => Column(
-                children: [
-                  e.value,
-                  if (e.key < items.length - 1)
-                    const Divider(
-                        height: 1, indent: 52, color: AppColors.divider),
-                ],
-              )),
-        ],
-      ),
-    )
-        .animate()
-        .fadeIn(duration: 400.ms, delay: const Duration(milliseconds: 100));
-  }
+  final String? subtitle;
+  final VoidCallback onTap;
+  const _Link(this.icon, this.title, this.subtitle, this.onTap);
 }
 
-class _SettingsItem extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-  final Widget? trailing;
-  final Color? iconColor;
-
-  const _SettingsItem(
-      {required this.icon,
-      required this.label,
-      required this.onTap,
-      this.trailing,
-      this.iconColor});
+class _LinkCard extends StatelessWidget {
+  final List<_Link> rows;
+  const _LinkCard({required this.rows});
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      onTap: onTap,
-      leading: Container(
-        width: 36,
-        height: 36,
-        decoration: BoxDecoration(
-            color: (iconColor ?? AppColors.primary).withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(8)),
-        child: Icon(icon, color: iconColor ?? AppColors.primary, size: 18),
+    return AccountCard(
+      padding: const EdgeInsets.symmetric(vertical: AppDimens.sm),
+      child: Column(
+        children: rows
+            .map((r) => IconRow(
+                  icon: r.icon,
+                  title: r.title,
+                  subtitle: r.subtitle,
+                  onTap: r.onTap,
+                  chevron: true,
+                ))
+            .toList(),
       ),
-      title: Text(label,
-          style: const TextStyle(
-              fontFamily: 'Poppins',
-              fontSize: 14,
-              color: AppColors.textPrimary)),
-      trailing: trailing ??
-          const Icon(Icons.chevron_right, color: AppColors.textHint, size: 18),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
     );
   }
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../core/theme/app_colors.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 class CustomTextField extends StatefulWidget {
   final String hint;
@@ -53,7 +54,7 @@ class _CustomTextFieldState extends State<CustomTextField> {
         suffixIcon: widget.isPassword
             ? IconButton(
                 icon: Icon(
-                  _obscureText ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                  _obscureText ? LucideIcons.eyeOff : LucideIcons.eye,
                   color: AppColors.textSecondary,
                   size: 20,
                 ),
@@ -101,7 +102,7 @@ class CustomDropdown extends StatelessWidget {
               Text(
                 hint,
                 style: const TextStyle(
-                  fontFamily: 'Poppins',
+                  fontFamily: 'TikTok Sans',
                   fontSize: 14,
                   color: AppColors.textHint,
                 ),
@@ -109,7 +110,7 @@ class CustomDropdown extends StatelessWidget {
             ],
           ),
           isExpanded: true,
-          icon: const Icon(Icons.keyboard_arrow_down, color: AppColors.textSecondary),
+          icon: const Icon(LucideIcons.chevronDown, color: AppColors.textSecondary),
           decoration: const InputDecoration(
             border: InputBorder.none,
             contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
@@ -120,7 +121,7 @@ class CustomDropdown extends StatelessWidget {
               child: Text(
                 item,
                 style: const TextStyle(
-                  fontFamily: 'Poppins',
+                  fontFamily: 'TikTok Sans',
                   fontSize: 14,
                   color: AppColors.textPrimary,
                 ),

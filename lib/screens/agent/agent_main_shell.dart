@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../core/theme/app_colors.dart';
 import '../../providers/messaging_provider.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 class AgentMainShell extends StatefulWidget {
   final Widget child;
@@ -16,11 +17,23 @@ class _AgentMainShellState extends State<AgentMainShell> {
   int _currentIndex = 0;
 
   final List<_NavItem> _items = const [
-    _NavItem(icon: Icons.dashboard_outlined, label: 'Dashboard', route: '/agent/dashboard'),
-    _NavItem(icon: Icons.people_outline, label: 'Joueurs', route: '/agent/players'),
-    _NavItem(icon: Icons.search, label: 'Recherche', route: '/agent/search'),
-    _NavItem(icon: Icons.message_outlined, label: 'Messages', route: '/agent/messages'),
-    _NavItem(icon: Icons.person_outline, label: 'Profil', route: '/agent/profile'),
+    _NavItem(
+        icon: LucideIcons.layoutDashboard,
+        label: 'Dashboard',
+        route: '/agent/dashboard'),
+    _NavItem(
+        icon: LucideIcons.users, label: 'Joueurs', route: '/agent/players'),
+    _NavItem(
+        icon: LucideIcons.search, label: 'Recherche', route: '/agent/search'),
+    _NavItem(
+        icon: LucideIcons.play,
+        label: 'Highlights',
+        route: '/agent/highlights'),
+    _NavItem(
+        icon: LucideIcons.messageSquare,
+        label: 'Messages',
+        route: '/agent/messages'),
+    _NavItem(icon: LucideIcons.user, label: 'Profil', route: '/agent/profile'),
   ];
 
   @override
@@ -76,7 +89,9 @@ class _AgentMainShellState extends State<AgentMainShell> {
                           duration: const Duration(milliseconds: 200),
                           child: Icon(
                             item.icon,
-                            color: isActive ? AppColors.gold : AppColors.textSecondary,
+                            color: isActive
+                                ? AppColors.primary
+                                : AppColors.textSecondary,
                             size: isActive ? 26 : 22,
                           ),
                         ),
@@ -84,10 +99,13 @@ class _AgentMainShellState extends State<AgentMainShell> {
                         Text(
                           item.label,
                           style: TextStyle(
-                            fontFamily: 'Poppins',
-                            fontSize: 9,
-                            fontWeight: isActive ? FontWeight.w700 : FontWeight.w400,
-                            color: isActive ? AppColors.gold : AppColors.textSecondary,
+                            fontFamily: 'TikTok Sans',
+                            fontSize: 10,
+                            fontWeight:
+                                isActive ? FontWeight.w700 : FontWeight.w400,
+                            color: isActive
+                                ? AppColors.primary
+                                : AppColors.textSecondary,
                           ),
                         ),
                       ],
@@ -112,5 +130,6 @@ class _NavItem {
   final IconData icon;
   final String label;
   final String route;
-  const _NavItem({required this.icon, required this.label, required this.route});
+  const _NavItem(
+      {required this.icon, required this.label, required this.route});
 }

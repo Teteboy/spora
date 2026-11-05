@@ -4,11 +4,31 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants/app_constants.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_text_styles.dart';
+import '../../models/player_model.dart';
 import '../../providers/player_provider.dart';
 import '../../providers/messaging_provider.dart';
-import '../../widgets/player_card.dart';
 import '../../widgets/spora_logo.dart';
+import '../home/home_screen.dart' show PlayerListTile;
 import 'package:badges/badges.dart' as badges;
+import 'package:lucide_icons_flutter/lucide_icons.dart';
+
+/// Bordered icon tile used in the top bar (Figma header pattern, 44 px).
+Widget _headerTile(IconData icon, VoidCallback onTap) {
+  return GestureDetector(
+    onTap: onTap,
+    child: Container(
+      width: AppDimens.minTouch,
+      height: AppDimens.minTouch,
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppDimens.radiusInput),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Icon(icon, size: 26, color: AppColors.textPrimary),
+    ),
+  );
+}
 
 class AgentPlayersScreen extends StatefulWidget {
   const AgentPlayersScreen({super.key});
@@ -41,10 +61,11 @@ class _AgentPlayersScreenState extends State<AgentPlayersScreen> {
             elevation: 0,
             title: Row(
               children: [
-                const SporaLogo(height: 28),
+                const SporaLogo(height: 24, flat: true),
                 const SizedBox(width: 8),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
                     color: AppColors.primary.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
@@ -52,7 +73,7 @@ class _AgentPlayersScreenState extends State<AgentPlayersScreen> {
                   child: const Text(
                     'AGENT',
                     style: TextStyle(
-                      fontFamily: 'Poppins',
+                      fontFamily: 'TikTok Sans',
                       fontSize: 10,
                       fontWeight: FontWeight.w700,
                       color: AppColors.primary,
@@ -70,22 +91,22 @@ class _AgentPlayersScreenState extends State<AgentPlayersScreen> {
                       showBadge: msg.unreadNotifications > 0,
                       badgeContent: Text(
                         '${msg.unreadNotifications}',
-                        style: const TextStyle(color: Colors.white, fontSize: 9),
+                        style:
+                            const TextStyle(color: Colors.white, fontSize: 9),
                       ),
-                      badgeStyle: const badges.BadgeStyle(badgeColor: AppColors.gold),
-                      child: IconButton(
-                        icon: const Icon(Icons.notifications_outlined, color: AppColors.textPrimary),
-                        onPressed: () => context.push('/notifications'),
-                      ),
+                      badgeStyle:
+                          const badges.BadgeStyle(badgeColor: AppColors.danger),
+                      child: _headerTile(LucideIcons.bell,
+                          () => context.push('/notifications')),
                     ),
                   );
                 },
               ),
-              IconButton(
-                icon: const Icon(Icons.filter_list, color: AppColors.textPrimary),
-                onPressed: () => _showFilterDialog(context),
+              Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: _headerTile(
+                    LucideIcons.listFilter, () => _showFilterDialog(context)),
               ),
-              const SizedBox(width: 8),
             ],
           ),
           SliverToBoxAdapter(
@@ -97,19 +118,25 @@ class _AgentPlayersScreenState extends State<AgentPlayersScreen> {
                   // Stats Row
                   Row(
                     children: [
-                      Expanded(child: _buildQuickStat('24', 'Joueurs', Icons.people, AppColors.primary)),
+                      Expanded(
+                          child: _buildQuickStat('24', 'Joueurs',
+                              LucideIcons.users, AppColors.primary)),
                       const SizedBox(width: 12),
-                      Expanded(child: _buildQuickStat('8', 'Favoris', Icons.star, AppColors.gold)),
+                      Expanded(
+                          child: _buildQuickStat('8', 'Favoris',
+                              LucideIcons.star, AppColors.gold)),
                       const SizedBox(width: 12),
-                      Expanded(child: _buildQuickStat('3', 'Contactés', Icons.message, AppColors.success)),
+                      Expanded(
+                          child: _buildQuickStat('3', 'Contactés',
+                              LucideIcons.messageSquare, AppColors.success)),
                     ],
                   ),
                   const SizedBox(height: 20),
-                  
+
                   Text(
                     'Mes Joueurs',
                     style: TextStyle(
-                      fontFamily: 'Poppins',
+                      fontFamily: 'TikTok Sans',
                       fontSize: 20,
                       fontWeight: FontWeight.w700,
                       color: AppColors.textPrimary,
@@ -128,21 +155,31 @@ class _AgentPlayersScreenState extends State<AgentPlayersScreen> {
                 );
               }
 
-              final players = provider.recommendedPlayers;
+              final players = provider.recommendedPlayers
+                  .where((p) => _matchesFilter(provider, p))
+                  .toList();
+
+              if (players.isEmpty) {
+                return SliverFillRemaining(
+                  child: Center(
+                    child: Text(
+                      'Aucun joueur dans cette catégorie.',
+                      style: AppTextStyles.body(),
+                    ),
+                  ),
+                );
+              }
 
               return SliverPadding(
-                padding: const EdgeInsets.symmetric(horizontal: AppConstants.spacingMD),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: AppConstants.spacingMD),
                 sliver: SliverList(
                   delegate: SliverChildBuilderDelegate(
                     (context, index) {
                       final player = players[index];
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: PlayerCard(
-                          player: player,
-                          onTap: () => context.push('/player/${player.id}'),
-                        ),
-                      ).animate().fadeIn(duration: 300.ms, delay: (index * 50).ms);
+                      return PlayerListTile(player: player)
+                          .animate()
+                          .fadeIn(duration: 300.ms, delay: (index * 50).ms);
                     },
                     childCount: players.length,
                   ),
@@ -156,11 +193,12 @@ class _AgentPlayersScreenState extends State<AgentPlayersScreen> {
     );
   }
 
-  Widget _buildQuickStat(String value, String label, IconData icon, Color color) {
+  Widget _buildQuickStat(
+      String value, String label, IconData icon, Color color) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -177,7 +215,7 @@ class _AgentPlayersScreenState extends State<AgentPlayersScreen> {
           Text(
             value,
             style: TextStyle(
-              fontFamily: 'Poppins',
+              fontFamily: 'TikTok Sans',
               fontSize: 20,
               fontWeight: FontWeight.w700,
               color: color,
@@ -186,14 +224,28 @@ class _AgentPlayersScreenState extends State<AgentPlayersScreen> {
           Text(
             label,
             style: TextStyle(
-              fontFamily: 'Poppins',
+              fontFamily: 'TikTok Sans',
               fontSize: 11,
-              color: Colors.grey[600],
+              color: AppColors.textSecondary,
             ),
           ),
         ],
       ),
     );
+  }
+
+  /// Local filtering over [PlayerProvider.recommendedPlayers] (mock data).
+  bool _matchesFilter(PlayerProvider provider, PlayerModel p) {
+    switch (_filter) {
+      case 'Favoris':
+        return provider.isPlayerSaved(p.id);
+      case 'Contactés':
+        return p.isPremium;
+      case 'Nouveau':
+        return !p.isVerified;
+      default:
+        return true;
+    }
   }
 
   void _showFilterDialog(BuildContext context) {
@@ -202,26 +254,34 @@ class _AgentPlayersScreenState extends State<AgentPlayersScreen> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (context) => Container(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Filtrer par',
-              style: TextStyle(
-                fontFamily: 'Poppins',
-                fontSize: 20,
-                fontWeight: FontWeight.w700,
+      builder: (sheetContext) => RadioGroup<String>(
+        groupValue: _filter,
+        onChanged: (v) {
+          if (v == null) return;
+          setState(() => _filter = v);
+          Navigator.pop(sheetContext);
+        },
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Filtrer par',
+                style: TextStyle(
+                  fontFamily: 'TikTok Sans',
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
-            ),
-            const SizedBox(height: 20),
-            _buildFilterOption('Tous', 'Tous les joueurs'),
-            _buildFilterOption('Favoris', 'Vos joueurs favoris'),
-            _buildFilterOption('Contactés', 'Joueurs contactés'),
-            _buildFilterOption('Nouveau', 'Nouveaux profils'),
-          ],
+              const SizedBox(height: 20),
+              _buildFilterOption('Tous', 'Tous les joueurs'),
+              _buildFilterOption('Favoris', 'Vos joueurs favoris'),
+              _buildFilterOption('Contactés', 'Joueurs contactés'),
+              _buildFilterOption('Nouveau', 'Nouveaux profils'),
+            ],
+          ),
         ),
       ),
     );
@@ -230,14 +290,7 @@ class _AgentPlayersScreenState extends State<AgentPlayersScreen> {
   Widget _buildFilterOption(String value, String label) {
     return ListTile(
       title: Text(label),
-      leading: Radio<String>(
-        value: value,
-        groupValue: _filter,
-        onChanged: (v) {
-          setState(() => _filter = v!);
-          Navigator.pop(context);
-        },
-      ),
+      leading: Radio<String>(value: value),
       onTap: () {
         setState(() => _filter = value);
         Navigator.pop(context);

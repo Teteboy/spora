@@ -1,160 +1,239 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
-import '../../providers/onboarding_provider.dart';
+
 import '../../core/theme/app_colors.dart';
-import '../../core/constants/app_constants.dart';
-import '../../widgets/spora_logo.dart';
-import '../../widgets/step_indicator.dart';
+import '../../models/user_model.dart';
+import '../../providers/auth_provider.dart';
+import 'agent_onboarding_screen.dart';
+import 'club_onboarding_screen.dart';
+import 'onboarding_draft.dart';
+import 'onboarding_widgets.dart';
+import 'steps/guardian_consent_step.dart';
+import 'steps/profile_ready_step.dart';
 import 'steps/step1_general_info.dart';
 import 'steps/step2_football_info.dart';
 import 'steps/step3_highlights.dart';
 
+export 'agent_onboarding_screen.dart' show AgentOnboardingScreen;
+export 'club_onboarding_screen.dart' show ClubOnboardingScreen;
+
+/// Role-aware onboarding entry point.
+///
+/// Routes: `/onboarding/player` → `OnboardingScreen(role: UserType.player)`
+/// (or `PlayerOnboardingScreen`), `/onboarding/agent` → `AgentOnboardingScreen`,
+/// `/onboarding/club` → `ClubOnboardingScreen`. Without [role] it dispatches on
+/// `AuthProvider.selectedUserType`.
 class OnboardingScreen extends StatelessWidget {
-  const OnboardingScreen({super.key});
+  const OnboardingScreen({super.key, this.role});
+
+  final UserType? role;
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => OnboardingProvider(),
-      child: const _OnboardingContent(),
-    );
+    final type = role ?? context.read<AuthProvider>().selectedUserType;
+    switch (type) {
+      case UserType.agent:
+        return const AgentOnboardingScreen();
+      case UserType.recruiter:
+        return const ClubOnboardingScreen();
+      case UserType.player:
+      case UserType.guest:
+        return const PlayerOnboardingScreen();
+    }
   }
 }
 
-class _OnboardingContent extends StatelessWidget {
-  const _OnboardingContent();
+/// Player onboarding: 3 steps (+ guardian sub-step for minors) → Profil prêt.
+class PlayerOnboardingScreen extends StatefulWidget {
+  const PlayerOnboardingScreen({super.key});
 
-  static const List<String> _steps = ['Infos générales', 'Infos football', 'Highlights'];
+  @override
+  State<PlayerOnboardingScreen> createState() => _PlayerOnboardingScreenState();
+}
+
+class _PlayerOnboardingScreenState extends State<PlayerOnboardingScreen> {
+  PlayerDraft _draft = PlayerDraft();
+  bool _restoring = true;
+  bool _emailLocked = false;
+  bool _finishing = false;
+  bool _finished = false;
+  Timer? _saveTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _restore();
+  }
+
+  Future<void> _restore() async {
+    final saved = await OnboardingStore.load(OnboardingStore.playerKey);
+    if (!mounted) return;
+    final user = context.read<AuthProvider>().currentUser;
+    setState(() {
+      if (saved != null) _draft = PlayerDraft.fromJson(saved);
+      if (user != null && user.email.isNotEmpty) {
+        _draft.email = user.email;
+        _emailLocked = true;
+        if (_draft.firstName.isEmpty && _draft.lastName.isEmpty) {
+          final parts = user.name.trim().split(RegExp(r'\s+'));
+          if (parts.isNotEmpty && parts.first.isNotEmpty) {
+            _draft.firstName = parts.first;
+            _draft.lastName = parts.skip(1).join(' ');
+          }
+        }
+      }
+      _restoring = false;
+    });
+    if (saved != null && _draft.stage != PlayerStage.general) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) showOnbSnack(context, 'Nous avons repris votre profil là où vous l’aviez laissé.');
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _saveTimer?.cancel();
+    if (!_finished) OnboardingStore.save(OnboardingStore.playerKey, _draft.toJson());
+    super.dispose();
+  }
+
+  void _changed() {
+    setState(() {});
+    _saveTimer?.cancel();
+    _saveTimer = Timer(const Duration(milliseconds: 400), _saveNow);
+  }
+
+  void _saveNow() {
+    if (_finished) return;
+    OnboardingStore.save(OnboardingStore.playerKey, _draft.toJson());
+  }
+
+  void _goTo(PlayerStage stage) {
+    FocusManager.instance.primaryFocus?.unfocus();
+    setState(() => _draft.stage = stage);
+    _saveTimer?.cancel();
+    _saveNow();
+  }
+
+  void _back() {
+    switch (_draft.stage) {
+      case PlayerStage.general:
+        _saveNow();
+        if (context.canPop()) {
+          context.pop();
+        } else {
+          context.go('/register');
+        }
+      case PlayerStage.guardian:
+        _goTo(PlayerStage.general);
+      case PlayerStage.guardianPending:
+        _goTo(PlayerStage.guardian);
+      case PlayerStage.football:
+        _goTo(_draft.isMinor ? PlayerStage.guardianPending : PlayerStage.general);
+      case PlayerStage.highlights:
+        _goTo(PlayerStage.football);
+      case PlayerStage.ready:
+        _goTo(PlayerStage.highlights);
+    }
+  }
+
+  Future<void> _finish(String route) async {
+    if (_finishing) return;
+    setState(() => _finishing = true);
+    final router = GoRouter.of(context);
+    final auth = context.read<AuthProvider>();
+    _finished = true;
+    _saveTimer?.cancel();
+    await OnboardingStore.clear(OnboardingStore.playerKey);
+    if (!auth.isAuthenticated) {
+      await auth.register(
+        name: _draft.fullName.isEmpty ? 'Nouveau joueur' : _draft.fullName,
+        email: _draft.email.isEmpty ? 'player@spora.com' : _draft.email,
+        password: '',
+        role: UserRole.player,
+      );
+    }
+    router.go(route);
+  }
+
+  Widget _buildStage() {
+    final d = _draft;
+    switch (d.stage) {
+      case PlayerStage.general:
+        return Step1GeneralInfo(
+          draft: d,
+          emailLocked: _emailLocked,
+          onChanged: _changed,
+          onBack: _back,
+          onContinue: () => _goTo(d.isMinor ? PlayerStage.guardian : PlayerStage.football),
+        );
+      case PlayerStage.guardian:
+        return GuardianConsentStep(
+          draft: d,
+          onChanged: _changed,
+          onBack: _back,
+          onSubmit: () {
+            d.guardianRequestedAt = DateTime.now();
+            _goTo(PlayerStage.guardianPending);
+          },
+        );
+      case PlayerStage.guardianPending:
+        return GuardianPendingStep(
+          draft: d,
+          onBack: _back,
+          onEdit: () => _goTo(PlayerStage.guardian),
+          onResend: () {
+            d.guardianRequestedAt = DateTime.now();
+            _changed();
+            showOnbSnack(context, 'Demande renvoyée à votre tuteur.');
+          },
+          onContinue: () => _goTo(PlayerStage.football),
+        );
+      case PlayerStage.football:
+        return Step2FootballInfo(
+          draft: d,
+          onChanged: _changed,
+          onBack: _back,
+          onContinue: () => _goTo(PlayerStage.highlights),
+        );
+      case PlayerStage.highlights:
+        return Step3Highlights(
+          draft: d,
+          onChanged: _changed,
+          onBack: _back,
+          onContinue: () => _goTo(PlayerStage.ready),
+        );
+      case PlayerStage.ready:
+        return ProfileReadyStep(
+          draft: d,
+          loading: _finishing,
+          onBack: _back,
+          onExplore: () => _finish('/home'),
+          onViewProfile: () => _finish('/profile'),
+        );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final onboarding = context.watch<OnboardingProvider>();
-
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: Stack(
-        children: [
-          // Bottom wave decoration
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            child: Container(
-              height: 200,
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Colors.transparent,
-                    Color(0xFFBFD7FF),
-                    Color(0xFF2563EB),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          SafeArea(
-            child: Column(
-              children: [
-                // Header
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppConstants.spacingMD,
-                    vertical: AppConstants.spacingSM,
-                  ),
-                  child: Row(
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.arrow_back_ios, color: AppColors.textPrimary),
-                        onPressed: () {
-                          if (onboarding.currentStep > 0) {
-                            onboarding.previousStep();
-                          } else {
-                            context.go('/register');
-                          }
-                        },
-                      ),
-                      const Expanded(child: Center(child: SporaLogo(height: 32))),
-                      TextButton(
-                        onPressed: () => context.go('/login'),
-                        child: const Text(
-                          'Connexion',
-                          style: TextStyle(
-                            fontFamily: 'Poppins',
-                            fontSize: 14,
-                            color: AppColors.primary,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                // Title
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: AppConstants.spacingMD),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      RichText(
-                        text: const TextSpan(
-                          children: [
-                            TextSpan(
-                              text: 'Crée ton profil joueur ',
-                              style: TextStyle(
-                                fontFamily: 'Poppins',
-                                fontSize: 22,
-                                fontWeight: FontWeight.w400,
-                                color: AppColors.textPrimary,
-                              ),
-                            ),
-                            TextSpan(
-                              text: 'SPORA',
-                              style: TextStyle(
-                                fontFamily: 'Poppins',
-                                fontSize: 22,
-                                fontWeight: FontWeight.w800,
-                                color: AppColors.primary,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      const Text(
-                        'Rejoins les clubs et recruteurs.',
-                        style: TextStyle(
-                          fontFamily: 'Poppins',
-                          fontSize: 14,
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      StepIndicator(
-                        currentStep: onboarding.currentStep,
-                        steps: _steps,
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 16),
-                // Step Content
-                Expanded(
-                  child: AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 300),
-                    child: switch (onboarding.currentStep) {
-                      0 => const Step1GeneralInfo(key: ValueKey('step1')),
-                      1 => const Step2FootballInfo(key: ValueKey('step2')),
-                      _ => const Step3Highlights(key: ValueKey('step3')),
-                    },
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
+    if (_restoring) {
+      return const Scaffold(
+        backgroundColor: AppColors.appBg,
+        body: Center(child: CircularProgressIndicator(color: AppColors.primary)),
+      );
+    }
+    return PopScope(
+      canPop: _draft.stage == PlayerStage.general,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop && !_finishing) _back();
+      },
+      child: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 200),
+        child: KeyedSubtree(key: ValueKey(_draft.stage), child: _buildStage()),
       ),
     );
   }
